@@ -25,10 +25,10 @@ We update this file as we make progress.
   - [x] Build Dual-Mode Layout (Child/Parent toggle).
   - [x] Build Explorer Mode (Child Chat Interface).
   - [x] Build Architect Mode (Parent Command Input Interface).
-- [ ] **Phase 1 Polish & QA**
-  - [ ] Connect the Next.js UI to the FastAPI backend successfully.
-  - [ ] Test the memory context loop end-to-end (add parent command -> see it affect child chat).
-  - [ ] Fix any immediate bugs.
+- [x] **Phase 1 Polish & QA**
+  - [x] Connect the Next.js UI to the FastAPI backend successfully.
+  - [x] Test the memory context loop end-to-end (add parent command -> see it affect child chat).
+  - [x] Fix any immediate bugs.
 
 ## Phase 2: The "Bridge" Connection
 **Goal:** Enable feedback loops and growth insights.
