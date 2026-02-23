@@ -1,9 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { ScrollArea } from "@/components/ui/scroll-area"
 
 type Message = {
   role: "user" | "model"
@@ -16,6 +15,13 @@ export function ChildChat() {
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight
+    }
+  }, [messages, isLoading])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -52,34 +58,35 @@ export function ChildChat() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-blue-50/50 rounded-lg border border-blue-100 p-4">
-      <ScrollArea className="flex-1 pr-4 mb-4">
-        <div className="space-y-4">
-          {messages.map((msg, idx) => (
-            <div
-              key={idx}
-              className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+    <div className="flex flex-col h-full bg-blue-50/50 rounded-lg border border-blue-100 p-4 min-h-0">
+      <div 
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto pr-4 mb-4 space-y-4"
+      >
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+          >
+            <div 
+              className={`max-w-[80%] rounded-2xl p-4 ${
+                msg.role === "user" 
+                  ? "bg-blue-600 text-white rounded-br-none" 
+                  : "bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-none"
+              }`}
             >
-              <div 
-                className={`max-w-[80%] rounded-2xl p-4 ${
-                  msg.role === "user" 
-                    ? "bg-blue-600 text-white rounded-br-none" 
-                    : "bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-none"
-                }`}
-              >
-                {msg.content}
-              </div>
+              {msg.content}
             </div>
-          ))}
-          {isLoading && (
-            <div className="flex w-full justify-start">
-              <div className="bg-white text-slate-500 shadow-sm border border-slate-100 rounded-2xl rounded-bl-none p-4">
-                Linxy is typing...
-              </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex w-full justify-start">
+            <div className="bg-white text-slate-500 shadow-sm border border-slate-100 rounded-2xl rounded-bl-none p-4">
+              Linxy is typing...
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </div>
+        )}
+      </div>
       
       <div className="flex gap-2 items-center">
         <Input 

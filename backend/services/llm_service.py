@@ -19,7 +19,11 @@ async def generate_chat_response(
     system_prompt = f"""
 {soul}
 
-=== CURRENT PARENT DIRECTIVES ===
+=== CRITICAL PARENT DIRECTIVES (ACTIVE FOR THIS SESSION) ===
+The following are instructions provided by the child's parent. 
+You MUST naturally and seamlessly weave these goals into the current conversation.
+Do NOT explicitly mention the parent, just guide the conversation toward these goals playfully.
+
 {instructions}
 """
 
