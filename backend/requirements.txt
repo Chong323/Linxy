@@ -4,5 +4,7 @@ pydantic
 pytest
 ruff
 mypy
-openai
+google-genai
 supabase
+python-dotenv
+aiofiles
