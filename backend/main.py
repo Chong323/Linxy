@@ -1,17 +1,20 @@
+import os
+from dotenv import load_dotenv
+
+# Load environment variables FIRST before any other local imports
+load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from services.llm_service import generate_chat_response
 from services.memory_service import add_core_instruction
-from dotenv import load_dotenv
-
-load_dotenv()
 
 app = FastAPI(title="Linxy API")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Allow local dev
+    allow_origins=["*"],  # Allow local dev
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
