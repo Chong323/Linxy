@@ -5,7 +5,6 @@ We update this file as we make progress.
 
 ## Phase 1: The "Soul" Prototype (MVP)
 **Goal:** Validate the "Memory" and "Persona" loop.
-**Duration:** 3 Weeks
 
 - [x] **Project Initialization**
   - [x] Create monorepo structure (`/frontend` and `/backend`).
@@ -32,7 +31,6 @@ We update this file as we make progress.
 
 ## Phase 2: The "Bridge" Connection
 **Goal:** Enable feedback loops and growth insights.
-**Duration:** 2-3 Weeks
 
 - [ ] **Reflection Agent (Backend)**
   - [ ] Create an async background task or endpoint that runs after a session.
@@ -47,7 +45,6 @@ We update this file as we make progress.
 
 ## Phase 3: The "Smart" Architect
 **Goal:** Intelligent parent guidance and polished UX.
-**Duration:** 2 Weeks
 
 - [ ] **Guided Parent Chat (Frontend & Backend)**
   - [ ] Add a conversational interface for parents in Architect Mode.
