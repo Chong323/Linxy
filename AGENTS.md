@@ -55,8 +55,8 @@ Welcome! You are an AI agent operating in the Linxy repository. Linxy is an AI-p
 - **Error Handling**: Implement React Error Boundaries and use `toast` notifications for user-facing API failures.
 
 ## 4. Feature Development Workflow
-1. **Analyze**: Read relevant files, especially `package.json` or `requirements.txt`, before writing code.
+1. **Analyze**: Read relevant files, especially `package.json` or `requirements.txt`, before writing code. If you are starting a new task, always review `ROADMAP.md` to see current goals.
 2. **Plan**: Propose a concise plan. For UI, prioritize mobile-first responsive design.
-3. **Implement**: Write idiomatic code matching the existing style. Ensure memory files (`soul.md`, etc.) are read/written asynchronously to avoid blocking.
+3. **Implement**: Write idiomatic code matching the existing style. Ensure memory files (`soul.md`, etc.) are read/written asynchronously to avoid blocking. Update `ROADMAP.md` checkboxes if you complete a feature.
 4. **Test**: Write unit tests for new backend logic (especially prompt assembly and memory saving).
 5. **Verify**: Always run the linting and type-checking commands before concluding a task. Do not leave the codebase in a broken state.
