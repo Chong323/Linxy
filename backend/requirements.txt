@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+pydantic
+pytest
+ruff
+mypy
+openai
+supabase
