@@ -1,0 +1,72 @@
+# Linxy Development Roadmap
+
+This document serves as the living project plan and roadmap for **Linxy: The Digital Bridge**.
+We update this file as we make progress.
+
+## Phase 1: The "Soul" Prototype (MVP)
+**Goal:** Validate the "Memory" and "Persona" loop.
+**Duration:** 3 Weeks
+
+- [x] **Project Initialization**
+  - [x] Create monorepo structure (`/frontend` and `/backend`).
+  - [x] Setup `AGENTS.md` guidelines for AI agents.
+  - [x] Initial git commit.
+- [x] **Backend: Memory Engine Foundation**
+  - [x] Setup FastAPI structure.
+  - [x] Create file I/O for `soul.md`, `core_instructions.md`, and `episodic_memory.json`.
+  - [x] Setup local mock user directory structure.
+- [x] **Backend: Chat & AI Integration**
+  - [x] Integrate Google Gemini SDK.
+  - [x] Create `/chat` endpoint (assembles context from `soul.md` and `core_instructions.md`).
+  - [x] Create `/parent/command` endpoint to update `core_instructions.md`.
+  - [x] Fix dotenv loading issues to ensure API key access.
+- [x] **Frontend: Foundation & UI (Explorer & Architect Modes)**
+  - [x] Setup Next.js, Tailwind, Shadcn UI.
+  - [x] Build Dual-Mode Layout (Child/Parent toggle).
+  - [x] Build Explorer Mode (Child Chat Interface).
+  - [x] Build Architect Mode (Parent Command Input Interface).
+- [ ] **Phase 1 Polish & QA**
+  - [ ] Connect the Next.js UI to the FastAPI backend successfully.
+  - [ ] Test the memory context loop end-to-end (add parent command -> see it affect child chat).
+  - [ ] Fix any immediate bugs.
+
+## Phase 2: The "Bridge" Connection
+**Goal:** Enable feedback loops and growth insights.
+**Duration:** 2-3 Weeks
+
+- [ ] **Reflection Agent (Backend)**
+  - [ ] Create an async background task or endpoint that runs after a session.
+  - [ ] Summarize chat logs and extract milestones/interests.
+  - [ ] Write summaries to `episodic_memory.json`.
+- [ ] **Parent Reports (Frontend)**
+  - [ ] Build a dashboard displaying "Top 3 Interests of the Week" extracted from memory.
+  - [ ] Fetch data from the backend to populate the dashboard.
+- [ ] **Prompt Engineering Polish**
+  - [ ] Refine system prompts to make the AI sound less robotic and more companion-like.
+  - [ ] Inject `episodic_memory.json` context into the chat prompt so Linxy can proactively ask about past topics.
+
+## Phase 3: The "Smart" Architect
+**Goal:** Intelligent parent guidance and polished UX.
+**Duration:** 2 Weeks
+
+- [ ] **Guided Parent Chat (Frontend & Backend)**
+  - [ ] Add a conversational interface for parents in Architect Mode.
+  - [ ] Parent AI interviews parents to uncover needs, automatically synthesizing them into `core_instructions.md`.
+- [ ] **Structured Reports**
+  - [ ] PDF generation or visual charts for child development.
+- [ ] **UI/UX Polish**
+  - [ ] Add child-friendly avatars and interface themes.
+  - [ ] Improve animations and chat transitions.
+
+## Phase 4: Production & Scale
+**Goal:** Move from local MVP to production-ready architecture.
+
+- [ ] **Database & Auth (Supabase)**
+  - [ ] Replace mock local file system with Supabase Storage for memory files (`soul.md`, etc.).
+  - [ ] Add user authentication (Parent login) via Supabase Auth.
+  - [ ] Setup PostgreSQL for user metadata (if needed beyond file storage).
+- [ ] **Deployment**
+  - [ ] Deploy frontend (Vercel).
+  - [ ] Deploy backend (Render/Railway).
+- [ ] **Native Transition (Future)**
+  - [ ] Wrap the validated PWA into a native App (React Native/Flutter).
