@@ -8,6 +8,9 @@ import { apiClient } from "@/lib/api-client"
 import { GuidedParentChat } from "@/components/guided-parent-chat"
 import { GrowthChart } from "@/components/growth-chart"
 
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { BarChart3, MessageSquare } from "lucide-react"
+
 interface MemoryReport {
   timestamp: string
   summary: string
@@ -76,44 +79,59 @@ export function ParentDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full gap-4 overflow-hidden">
-      <Card className="flex flex-col flex-shrink-0 min-h-[40%] max-h-[40%] overflow-hidden">
-        <CardHeader className="flex flex-row justify-between items-center pb-2 flex-none">
-          <div>
-            <CardTitle>Child&apos;s Growth Insights</CardTitle>
-            <CardDescription>
-              Recent sessions and developmental observations.
-            </CardDescription>
-          </div>
+    <div className="flex flex-col h-full w-full overflow-hidden">
+      <Tabs defaultValue="insights" className="flex flex-col h-full w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 flex-none">
+          <TabsList className="grid w-full sm:w-[400px] grid-cols-2">
+            <TabsTrigger value="insights" className="flex items-center gap-2">
+              <BarChart3 size={16} /> Growth Insights
+            </TabsTrigger>
+            <TabsTrigger value="chat" className="flex items-center gap-2">
+              <MessageSquare size={16} /> Architect Chat
+            </TabsTrigger>
+          </TabsList>
+          
           <Button
             variant="outline"
             size="sm"
             onClick={fetchReports}
             disabled={isFetching}
+            className="w-full sm:w-auto"
           >
             {isFetching ? "Refreshing..." : "Refresh Insights"}
           </Button>
-        </CardHeader>
-        <CardContent className="pt-4 overflow-y-auto">
-          {reports.length > 0 && <GrowthChart reports={reports} />}
-          <div className="space-y-4">
-            {reports.length === 0 ? (
-              <div className="text-center py-8 text-slate-400">
-                <p className="mb-2">No sessions analyzed yet.</p>
-                <p className="text-xs italic">
-                  Start chatting with your child to generate insights!
-                </p>
-              </div>
-            ) : (
-              reports.map(renderReportCard)
-            )}
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
-        <GuidedParentChat />
-      </div>
+        <TabsContent value="insights" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=active]:flex flex-col">
+          <Card className="flex flex-col h-full min-h-0 overflow-hidden">
+            <CardHeader className="flex-none pb-2">
+              <CardTitle>Child&apos;s Growth Insights</CardTitle>
+              <CardDescription>
+                Recent sessions and developmental observations.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto pt-4">
+              {reports.length > 0 && <GrowthChart reports={reports} />}
+              <div className="space-y-4">
+                {reports.length === 0 ? (
+                  <div className="text-center py-8 text-slate-400">
+                    <p className="mb-2">No sessions analyzed yet.</p>
+                    <p className="text-xs italic">
+                      Start chatting with your child to generate insights!
+                    </p>
+                  </div>
+                ) : (
+                  reports.map(renderReportCard)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="chat" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=active]:flex flex-col">
+          <GuidedParentChat />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
