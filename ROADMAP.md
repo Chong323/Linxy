@@ -42,6 +42,9 @@ We update this file as we make progress.
 - [x] **Prompt Engineering Polish**
   - [x] Refine system prompts to make the AI sound less robotic and more companion-like.
   - [x] Inject `episodic_memory.json` context into the chat prompt so Linxy can proactively ask about past topics.
+- [x] **Session Management (Frontend to Backend)**
+  - [x] Add "End Session" functionality to `ChildChat` to trigger `/chat/reflect` and generate the memory log.
+  - [x] Clear chat state after successful reflection.
 
 ## Phase 3: The "Smart" Architect
 **Goal:** Intelligent parent guidance and polished UX.

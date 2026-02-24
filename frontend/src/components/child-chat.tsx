@@ -3,6 +3,8 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { toast } from "sonner"
+import { apiClient } from "@/lib/api-client"
 
 type Message = {
   role: "user" | "model"
@@ -15,6 +17,7 @@ export function ChildChat() {
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isEndingSession, setIsEndingSession] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -33,13 +36,9 @@ export function ChildChat() {
     
     try {
       // In a real app we would call the /chat endpoint
-      const response = await fetch("http://localhost:8000/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          message: input,
-          history: messages 
-        })
+      const response = await apiClient.post("/chat", {
+        message: input,
+        history: messages,
       })
       
       const data = await response.json()
@@ -57,8 +56,47 @@ export function ChildChat() {
     }
   }
 
+  const handleEndSession = async () => {
+    if (messages.length <= 1 || isEndingSession) return
+
+    setIsEndingSession(true)
+    const toastId = toast.loading("Saving session memories...")
+
+    try {
+      const response = await apiClient.post("/chat/reflect", {
+        history: messages,
+      })
+
+      if (response.ok) {
+        toast.success("Session saved successfully!", { id: toastId })
+        // Reset chat for the next session
+        setMessages([
+          { role: "model", content: "Hi! I'm Linxy. How are you doing today?" },
+        ])
+      } else {
+        toast.error("Failed to save session.", { id: toastId })
+      }
+    } catch {
+      toast.error("Failed to reach Linxy's brain.", { id: toastId })
+    } finally {
+      setIsEndingSession(false)
+    }
+  }
+
   return (
-    <div className="flex flex-col h-full bg-blue-50/50 rounded-lg border border-blue-100 p-4 min-h-0">
+    <div className="flex flex-col h-full bg-blue-50/50 rounded-lg border border-blue-100 p-4 min-h-0 relative">
+      <div className="absolute top-4 right-4 z-10">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleEndSession}
+          disabled={messages.length <= 1 || isEndingSession || isLoading}
+          className="bg-white/80 hover:bg-white text-blue-600 border-blue-200"
+        >
+          {isEndingSession ? "Saving..." : "End Session"}
+        </Button>
+      </div>
+
       <div 
         ref={scrollRef}
         className="flex-1 overflow-y-auto pr-4 mb-4 space-y-4"
