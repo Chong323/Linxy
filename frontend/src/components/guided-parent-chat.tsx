@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { apiClient } from "@/lib/api-client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Settings, User } from "lucide-react"
@@ -57,14 +56,15 @@ export function GuidedParentChat() {
   }
 
   return (
-    <Card className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
-      <CardHeader className="pb-2 flex-none">
-        <CardTitle>Guided Architect Chat</CardTitle>
-        <CardDescription>
+    <div className="flex-1 flex flex-col h-full bg-white rounded-lg border border-slate-200 p-4 min-h-0 relative">
+      <div className="pb-4 flex-none border-b border-slate-100 mb-4">
+        <h3 className="font-semibold text-lg leading-none mb-1.5">Guided Architect Chat</h3>
+        <p className="text-sm text-slate-500">
           Chat with the Architect AI to automatically set core instructions for Linxy.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
+        </p>
+      </div>
+      
+      <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div 
           ref={scrollRef}
           className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2"
@@ -129,7 +129,7 @@ export function GuidedParentChat() {
             Send
           </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
