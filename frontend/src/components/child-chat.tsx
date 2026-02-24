@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
+import { Bot, UserRound } from "lucide-react"
 
 type Message = {
   role: "user" | "model"
@@ -104,10 +106,17 @@ export function ChildChat() {
         {messages.map((msg, idx) => (
           <div
             key={idx}
-            className={`flex w-full ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            className={`flex w-full gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
+            {msg.role === "model" && (
+              <Avatar className="h-8 w-8 mt-auto">
+                <AvatarFallback className="bg-blue-100 text-blue-600">
+                  <Bot size={18} />
+                </AvatarFallback>
+              </Avatar>
+            )}
             <div 
-              className={`max-w-[80%] rounded-2xl p-4 ${
+              className={`max-w-[75%] rounded-2xl p-4 ${
                 msg.role === "user" 
                   ? "bg-blue-600 text-white rounded-br-none" 
                   : "bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-none"
@@ -115,10 +124,22 @@ export function ChildChat() {
             >
               {msg.content}
             </div>
+            {msg.role === "user" && (
+              <Avatar className="h-8 w-8 mt-auto">
+                <AvatarFallback className="bg-slate-200 text-slate-600">
+                  <UserRound size={18} />
+                </AvatarFallback>
+              </Avatar>
+            )}
           </div>
         ))}
         {isLoading && (
-          <div className="flex w-full justify-start">
+          <div className="flex w-full gap-2 justify-start">
+            <Avatar className="h-8 w-8 mt-auto">
+              <AvatarFallback className="bg-blue-100 text-blue-600">
+                <Bot size={18} />
+              </AvatarFallback>
+            </Avatar>
             <div className="bg-white text-slate-500 shadow-sm border border-slate-100 rounded-2xl rounded-bl-none p-4">
               Linxy is typing...
             </div>

@@ -3,9 +3,10 @@
 import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
+import { GuidedParentChat } from "@/components/guided-parent-chat"
+import { GrowthChart } from "@/components/growth-chart"
 
 interface MemoryReport {
   timestamp: string
@@ -17,8 +18,6 @@ interface MemoryReport {
 export function ParentDashboard() {
   const [reports, setReports] = useState<MemoryReport[]>([])
   const [isFetching, setIsFetching] = useState(false)
-  const [command, setCommand] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const fetchReports = useCallback(async () => {
     setIsFetching(true)
@@ -40,29 +39,6 @@ export function ParentDashboard() {
   useEffect(() => {
     fetchReports()
   }, [fetchReports])
-
-  const handleSubmit = async () => {
-    if (!command.trim() || isSubmitting) return
-
-    setIsSubmitting(true)
-
-    try {
-      const response = await apiClient.post("/parent/command", { command })
-
-      if (response.ok) {
-        setCommand("")
-        toast.success("Successfully added directive to memory.")
-      } else {
-        toast.error("Failed to add directive.")
-      }
-    } catch {
-      toast.error("Failed to add directive.", {
-        description: "Ensure the backend is running.",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
-  }
 
   const renderReportCard = (memory: MemoryReport, index: number) => {
     const interests = memory.interests?.length
@@ -101,14 +77,25 @@ export function ParentDashboard() {
 
   return (
     <div className="flex flex-col h-full gap-6 p-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Child&apos;s Growth Insights</CardTitle>
-          <CardDescription>
-            Recent sessions and developmental observations.
-          </CardDescription>
+      <Card className="flex flex-col max-h-[50%]">
+        <CardHeader className="flex flex-row justify-between items-center pb-2">
+          <div>
+            <CardTitle>Child&apos;s Growth Insights</CardTitle>
+            <CardDescription>
+              Recent sessions and developmental observations.
+            </CardDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={fetchReports}
+            disabled={isFetching}
+          >
+            {isFetching ? "Refreshing..." : "Refresh Insights"}
+          </Button>
         </CardHeader>
-        <CardContent className="pt-4">
+        <CardContent className="pt-4 overflow-y-auto">
+          {reports.length > 0 && <GrowthChart reports={reports} />}
           <div className="space-y-4">
             {reports.length === 0 ? (
               <div className="text-center py-8 text-slate-400">
@@ -124,40 +111,9 @@ export function ParentDashboard() {
         </CardContent>
       </Card>
 
-      <Card className="flex-1 flex flex-col">
-        <CardHeader className="flex flex-row justify-between items-center pb-2">
-          <div>
-            <CardTitle>Education Goals</CardTitle>
-            <CardDescription>
-              Add new instructions to Linxy&apos;s memory.
-            </CardDescription>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={fetchReports}
-            disabled={isFetching}
-          >
-            {isFetching ? "Refreshing..." : "Refresh Insights"}
-          </Button>
-        </CardHeader>
-        <CardContent className="flex-1 flex flex-col gap-4 pt-4">
-          <Textarea
-            className="flex-1 min-h-[120px] resize-none"
-            placeholder="E.g., Try to encourage math skills today."
-            value={command}
-            onChange={(e) => setCommand(e.target.value)}
-            disabled={isSubmitting}
-          />
-          <Button
-            className="w-full sm:w-auto self-end"
-            onClick={handleSubmit}
-            disabled={!command.trim() || isSubmitting}
-          >
-            {isSubmitting ? "Adding..." : "Add to Instructions"}
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="flex-1 flex flex-col min-h-0">
+        <GuidedParentChat />
+      </div>
     </div>
   )
 }

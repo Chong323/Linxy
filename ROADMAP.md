@@ -49,14 +49,14 @@ We update this file as we make progress.
 ## Phase 3: The "Smart" Architect
 **Goal:** Intelligent parent guidance and polished UX.
 
-- [ ] **Guided Parent Chat (Frontend & Backend)**
-  - [ ] Add a conversational interface for parents in Architect Mode.
-  - [ ] Parent AI interviews parents to uncover needs, automatically synthesizing them into `core_instructions.md`.
-- [ ] **Structured Reports**
-  - [ ] PDF generation or visual charts for child development.
-- [ ] **UI/UX Polish**
-  - [ ] Add child-friendly avatars and interface themes.
-  - [ ] Improve animations and chat transitions.
+- [x] **Guided Parent Chat (Frontend & Backend)**
+  - [x] Add a conversational interface for parents in Architect Mode.
+  - [x] Parent AI interviews parents to uncover needs, automatically synthesizing them into `core_instructions.md`.
+- [x] **Structured Reports**
+  - [x] PDF generation or visual charts for child development.
+- [x] **UI/UX Polish**
+  - [x] Add child-friendly avatars and interface themes.
+  - [x] Improve animations and chat transitions.
 
 ## Phase 4: Production & Scale
 **Goal:** Move from local MVP to production-ready architecture.

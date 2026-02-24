@@ -147,3 +147,53 @@ Return the output strictly in JSON format matching the requested schema.
         "interests": [],
         "milestones": [],
     }
+
+
+async def generate_parent_chat_response(
+    message: str, history: list[dict] | None = None
+) -> str:
+    """
+    Generates a chat response for the Parent Architect AI.
+    """
+    instructions = await get_core_instructions()
+
+    system_prompt = f"""
+You are Linxy's 'Architect AI', designed to help parents guide their child's digital companion.
+Your goal is to converse with the parent, understand what they want their child to learn, experience, or avoid, and suggest actionable 'core instructions' for Linxy.
+
+Current active instructions for the child:
+{instructions}
+
+When the parent explicitly agrees to add a specific instruction, you MUST include the following exact tag anywhere in your reply:
+[SAVE_INSTRUCTION: <the exact instruction text>]
+
+For example:
+"That's a great idea! I'll make sure Linxy focuses on that.
+[SAVE_INSTRUCTION: Encourage counting to 10 during playtime.]"
+"""
+    model_id = "gemini-2.5-flash"
+
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=0.7,
+    )
+
+    contents = []
+    if history:
+        for msg in history:
+            role = "user" if msg["role"] == "user" else "model"
+            contents.append(
+                types.Content(
+                    role=role, parts=[types.Part.from_text(text=msg["content"])]
+                )
+            )
+
+    contents.append(
+        types.Content(role="user", parts=[types.Part.from_text(text=message)])
+    )
+
+    response = client.models.generate_content(
+        model=model_id, contents=contents, config=config
+    )
+
+    return response.text if response.text is not None else ""

@@ -1,3 +1,4 @@
+import re
 from dotenv import load_dotenv
 
 # Load environment variables FIRST before any other local imports
@@ -6,12 +7,16 @@ load_dotenv()
 from fastapi import FastAPI, HTTPException  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
 from pydantic import BaseModel  # noqa: E402
-from services.llm_service import generate_chat_response, run_session_reflection  # noqa: E402
-from services.memory_service import (
+from services.llm_service import (  # noqa: E402
+    generate_chat_response,
+    run_session_reflection,
+    generate_parent_chat_response,
+)
+from services.memory_service import (  # noqa: E402
     add_core_instruction,
     add_episodic_memory,
     get_episodic_memory,
-)  # noqa: E402
+)
 
 app = FastAPI(title="Linxy API")
 
@@ -85,6 +90,27 @@ async def parent_reports_endpoint():
     try:
         memories = await get_episodic_memory()
         return {"status": "success", "memories": memories}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/parent/chat", response_model=ChatResponse)
+async def parent_chat_endpoint(req: ChatRequest):
+    try:
+        history_dicts = [
+            {"role": msg.role, "content": msg.content} for msg in req.history
+        ]
+        reply = await generate_parent_chat_response(req.message, history_dicts)
+
+        # Intercept the SAVE_INSTRUCTION tag
+        match = re.search(r"\[SAVE_INSTRUCTION:\s*(.*?)\]", reply)
+        if match:
+            instruction = match.group(1).strip()
+            await add_core_instruction(instruction)
+            # Remove the tag from the final reply shown to the parent
+            reply = reply.replace(match.group(0), "").strip()
+
+        return ChatResponse(reply=reply)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
