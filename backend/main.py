@@ -103,12 +103,12 @@ async def parent_chat_endpoint(req: ChatRequest):
         reply = await generate_parent_chat_response(req.message, history_dicts)
 
         # Intercept the SAVE_INSTRUCTION tag
-        match = re.search(r"\[SAVE_INSTRUCTION:\s*(.*?)\]", reply)
-        if match:
-            instruction = match.group(1).strip()
-            await add_core_instruction(instruction)
-            # Remove the tag from the final reply shown to the parent
-            reply = reply.replace(match.group(0), "").strip()
+        matches = re.findall(r"\[SAVE_INSTRUCTION:\s*(.*?)\]", reply)
+        for instruction in matches:
+            await add_core_instruction(instruction.strip())
+
+        # Remove the tag(s) from the final reply shown to the parent
+        reply = re.sub(r"\[SAVE_INSTRUCTION:\s*.*?\]", "", reply).strip()
 
         return ChatResponse(reply=reply)
     except Exception as e:
