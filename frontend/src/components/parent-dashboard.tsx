@@ -76,7 +76,7 @@ export function ParentDashboard() {
   }
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 gap-4">
+    <div className="flex flex-col h-full flex-1 min-h-0 gap-4">
       <Card className="flex flex-col min-h-[30%] max-h-[50%] flex-shrink-0">
         <CardHeader className="flex flex-row justify-between items-center pb-2 flex-none">
           <div>

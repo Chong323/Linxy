@@ -23,11 +23,11 @@ export function MainApp() {
             </TabsList>
           </div>
           
-          <TabsContent value="explorer" className="flex-1 overflow-hidden data-[state=active]:flex flex-col m-0 p-6 pt-2">
+          <TabsContent value="explorer" className="flex-1 h-full min-h-0 overflow-hidden data-[state=active]:flex flex-col m-0 p-6 pt-2">
             <ChildChat />
           </TabsContent>
           
-          <TabsContent value="architect" className="flex-1 overflow-hidden data-[state=active]:flex flex-col m-0 p-6 pt-2">
+          <TabsContent value="architect" className="flex-1 h-full min-h-0 overflow-hidden data-[state=active]:flex flex-col m-0 p-6 pt-2">
             <ParentDashboard />
           </TabsContent>
         </Tabs>

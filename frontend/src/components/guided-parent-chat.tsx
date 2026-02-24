@@ -57,7 +57,7 @@ export function GuidedParentChat() {
   }
 
   return (
-    <Card className="flex-1 flex flex-col h-full overflow-hidden">
+    <Card className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
       <CardHeader className="pb-2 flex-none">
         <CardTitle>Guided Architect Chat</CardTitle>
         <CardDescription>
