@@ -4,6 +4,12 @@
 
 Unlike standard chatbots that focus on Q&A, Linxy features a **"Persistent Soul Architecture"** (inspired by OpenClaw). It remembers past interactions, evolves with the child, and executes educational strategies defined by parents, providing weekly growth analytics and decision support.
 
+### Watch the Phase 1 MVP Demo
+<video src="./phase-1-mvp.mov" controls="controls" style="max-width: 100%;">
+  Your browser does not support the video tag.
+</video>
+<br>
+
 ## Core Value Proposition
 * **For Children:** A "Real" Companion with empathy and memory, not a cold search engine.
 * **For Parents:** An "Education Co-pilot" that transforms vague parenting anxieties into actionable interaction strategies and visualizable growth data.
