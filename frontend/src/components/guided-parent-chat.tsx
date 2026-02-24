@@ -64,7 +64,7 @@ export function GuidedParentChat() {
           Chat with the Architect AI to automatically set core instructions for Linxy.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col min-h-[300px] overflow-hidden">
+      <CardContent className="flex-1 flex flex-col min-h-0 overflow-hidden">
         <div 
           ref={scrollRef}
           className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2"

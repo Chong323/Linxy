@@ -27,7 +27,7 @@ export function MainApp() {
             <ChildChat />
           </TabsContent>
           
-          <TabsContent value="architect" className="flex-1 overflow-auto data-[state=active]:flex flex-col m-0 p-6 pt-2">
+          <TabsContent value="architect" className="flex-1 overflow-hidden data-[state=active]:flex flex-col m-0 p-6 pt-2">
             <ParentDashboard />
           </TabsContent>
         </Tabs>
