@@ -76,8 +76,8 @@ export function ParentDashboard() {
   }
 
   return (
-    <div className="flex flex-col h-full flex-1 min-h-0 gap-4">
-      <Card className="flex flex-col min-h-[30%] max-h-[50%] flex-shrink-0">
+    <div className="flex flex-col h-full w-full gap-4 overflow-hidden">
+      <Card className="flex flex-col flex-shrink-0 min-h-[40%] max-h-[40%] overflow-hidden">
         <CardHeader className="flex flex-row justify-between items-center pb-2 flex-none">
           <div>
             <CardTitle>Child&apos;s Growth Insights</CardTitle>
@@ -111,7 +111,7 @@ export function ParentDashboard() {
         </CardContent>
       </Card>
 
-      <div className="flex-1 flex flex-col min-h-0">
+      <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
         <GuidedParentChat />
       </div>
     </div>
