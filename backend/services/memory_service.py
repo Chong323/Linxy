@@ -45,3 +45,9 @@ async def get_episodic_memory() -> list:
 async def write_episodic_memory(memory_list: list) -> None:
     path = BASE_MEM_DIR / "episodic_memory.json"
     await write_file(path, json.dumps(memory_list, indent=2))
+
+
+async def add_episodic_memory(memory_item: dict) -> None:
+    current_memories = await get_episodic_memory()
+    current_memories.append(memory_item)
+    await write_episodic_memory(current_memories)

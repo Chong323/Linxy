@@ -32,16 +32,16 @@ We update this file as we make progress.
 ## Phase 2: The "Bridge" Connection
 **Goal:** Enable feedback loops and growth insights.
 
-- [ ] **Reflection Agent (Backend)**
-  - [ ] Create an async background task or endpoint that runs after a session.
-  - [ ] Summarize chat logs and extract milestones/interests.
-  - [ ] Write summaries to `episodic_memory.json`.
-- [ ] **Parent Reports (Frontend)**
-  - [ ] Build a dashboard displaying "Top 3 Interests of the Week" extracted from memory.
-  - [ ] Fetch data from the backend to populate the dashboard.
-- [ ] **Prompt Engineering Polish**
-  - [ ] Refine system prompts to make the AI sound less robotic and more companion-like.
-  - [ ] Inject `episodic_memory.json` context into the chat prompt so Linxy can proactively ask about past topics.
+- [x] **Reflection Agent (Backend)**
+  - [x] Create an async background task or endpoint that runs after a session.
+  - [x] Summarize chat logs and extract milestones/interests.
+  - [x] Write summaries to `episodic_memory.json`.
+- [x] **Parent Reports (Frontend)**
+  - [x] Build a dashboard displaying "Top 3 Interests of the Week" extracted from memory.
+  - [x] Fetch data from the backend to populate the dashboard.
+- [x] **Prompt Engineering Polish**
+  - [x] Refine system prompts to make the AI sound less robotic and more companion-like.
+  - [x] Inject `episodic_memory.json` context into the chat prompt so Linxy can proactively ask about past topics.
 
 ## Phase 3: The "Smart" Architect
 **Goal:** Intelligent parent guidance and polished UX.

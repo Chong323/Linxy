@@ -1,14 +1,17 @@
-import os
 from dotenv import load_dotenv
 
 # Load environment variables FIRST before any other local imports
 load_dotenv()
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-from services.llm_service import generate_chat_response
-from services.memory_service import add_core_instruction
+from fastapi import FastAPI, HTTPException  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from pydantic import BaseModel  # noqa: E402
+from services.llm_service import generate_chat_response, run_session_reflection  # noqa: E402
+from services.memory_service import (
+    add_core_instruction,
+    add_episodic_memory,
+    get_episodic_memory,
+)  # noqa: E402
 
 app = FastAPI(title="Linxy API")
 
@@ -53,6 +56,35 @@ async def chat_endpoint(req: ChatRequest):
         ]
         reply = await generate_chat_response(req.message, history_dicts)
         return ChatResponse(reply=reply)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class ReflectionRequest(BaseModel):
+    history: list[ChatMessage]
+
+
+@app.post("/chat/reflect")
+async def reflect_endpoint(req: ReflectionRequest):
+    try:
+        history_dicts = [
+            {"role": msg.role, "content": msg.content} for msg in req.history
+        ]
+        reflection_result = await run_session_reflection(history_dicts)
+        await add_episodic_memory(reflection_result)
+        return {"status": "success", "reflection": reflection_result}
+    except Exception as e:
+        import traceback
+
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/parent/reports")
+async def parent_reports_endpoint():
+    try:
+        memories = await get_episodic_memory()
+        return {"status": "success", "memories": memories}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
