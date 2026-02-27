@@ -68,10 +68,10 @@ We update this file as we make progress.
   - [x] Rename `soul.md` to `identity.md` in file system and `memory_service.py`.
   - [x] Implement `current_state.md` read/write handlers.
   - [x] **Context Window Optimization:** Implement a rolling-window summarizer. Extract older `episodic_memory.json` entries into a `long_term_summary.md` to prevent LLM token bloat.
-- [ ] **Task 3: Proactive Wake-Up & Gamification (Backend/Frontend)**
-  - [ ] Create `/chat/wakeup` endpoint for personalized first messages based on `current_state.md`.
-  - [ ] **Gamification:** Tie wake-up interactions to small digital rewards (e.g., unlocking a virtual sticker for responding).
-  - [ ] Refactor `ChildChat` to automatically fetch the first message from `/chat/wakeup` on mount.
+- [x] **Task 3: Proactive Wake-Up & Gamification (Backend/Frontend)**
+  - [x] Create `/chat/wakeup` endpoint for personalized first messages based on `current_state.md`.
+  - [x] **Gamification:** Tie wake-up interactions to small digital rewards (e.g., unlocking a virtual sticker for responding).
+  - [x] Refactor `ChildChat` to automatically fetch the first message from `/chat/wakeup` on mount.
 - [ ] **Task 4: Curriculum Engine (Backend)**
   - [ ] Update `llm_service.py` system prompts to strongly enforce grade-level appropriateness.
   - [ ] Ensure `core_instructions.md` acts as the primary syllabus constraint before casual chat.
