@@ -19,6 +19,11 @@ export function GuidedParentChat() {
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [messages])
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -115,6 +120,7 @@ export function GuidedParentChat() {
         
         <div className="flex gap-2 items-center mt-auto flex-none pt-2 border-t border-slate-100">
           <Input 
+            ref={inputRef}
             className="flex-1"
             placeholder="Type your goal for Linxy..." 
             value={input}

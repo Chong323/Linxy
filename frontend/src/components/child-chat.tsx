@@ -24,6 +24,11 @@ export function ChildChat() {
   const [rewards, setRewards] = useState<Reward[]>([])
   const [isLoadingRewards, setIsLoadingRewards] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    inputRef.current?.focus()
+  }, [messages])
 
   useEffect(() => {
     const initializeChat = async () => {
@@ -193,6 +198,7 @@ export function ChildChat() {
         
         <div className="p-4 pt-0 flex gap-2 items-center">
           <Input 
+            ref={inputRef}
             className="rounded-full bg-white border-slate-200"
             placeholder="Type a message to Linxy..." 
             value={input}
