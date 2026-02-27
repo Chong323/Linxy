@@ -58,7 +58,25 @@ We update this file as we make progress.
   - [x] Add child-friendly avatars and interface themes.
   - [x] Improve animations and chat transitions.
 
-## Phase 4: Production & Scale
+## Phase 4: The "Living Companion" Pivot
+**Goal:** Transform the prototype into a proactive, habit-forming PWA with a structured curriculum hook.
+
+- [ ] **The "Living" Architecture Upgrade**
+  - [ ] Rename `soul.md` concept to `identity.md` and create a dynamic `current_state.md`.
+  - [ ] Build background job or startup routine to populate `current_state.md` with "waking up" context.
+- [ ] **Curriculum Engine (Backend)**
+  - [ ] Add Grade Level setting to Parent Dashboard.
+  - [ ] Update System Prompts to enforce Grade-Level appropriate language and curriculum generation (LLM native).
+  - [ ] Add "Syllabus Injection" text box for parents to paste weekly homework.
+- [ ] **Proactive UX (Frontend)**
+  - [ ] Implement PWA Manifest and Service Workers for installability.
+  - [ ] Implement local push notifications ("Linxy is awake!").
+  - [ ] Refactor Child Chat so the AI *initiates* the first message on load based on `current_state.md`.
+- [ ] **The Confidentiality Protocol**
+  - [ ] Restrict raw chat logs from Parent view.
+  - [ ] Refactor Reflection Agent to generate "Parent-Safe Insights" (hiding specific secrets while showing educational progress).
+
+## Phase 5: Production & Scale
 **Goal:** Move from local MVP to production-ready architecture.
 
 - [ ] **Database & Auth (Supabase)**
