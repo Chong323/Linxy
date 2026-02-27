@@ -11,15 +11,16 @@ import { GrowthChart } from "@/components/growth-chart"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { BarChart3, MessageSquare } from "lucide-react"
 
-interface MemoryReport {
+interface ParentReport {
   timestamp: string
-  summary: string
-  interests: string[]
-  milestones: string[]
+  themes: string[]
+  emotional_trends: string[]
+  growth_areas: string[]
+  parent_action_suggestions: string[]
 }
 
 export function ParentDashboard() {
-  const [reports, setReports] = useState<MemoryReport[]>([])
+  const [reports, setReports] = useState<ParentReport[]>([])
   const [isFetching, setIsFetching] = useState(false)
 
   const fetchReports = useCallback(async () => {
@@ -28,7 +29,7 @@ export function ParentDashboard() {
       const response = await apiClient.get("/parent/reports")
       if (response.ok) {
         const data = await response.json()
-        setReports(data.memories || [])
+        setReports(data.reports || [])
       }
     } catch {
       toast.error("Failed to fetch reports", {
@@ -43,34 +44,45 @@ export function ParentDashboard() {
     fetchReports()
   }, [fetchReports])
 
-  const renderReportCard = (memory: MemoryReport, index: number) => {
-    const interests = memory.interests?.length
-      ? memory.interests.join(", ")
+  const renderReportCard = (report: ParentReport, index: number) => {
+    const themes = report.themes?.length
+      ? report.themes.join(", ")
       : "None observed"
-    const milestones = memory.milestones?.length
-      ? memory.milestones.join(", ")
+    const emotions = report.emotional_trends?.length
+      ? report.emotional_trends.join(", ")
       : "None observed"
+    const growth = report.growth_areas?.length
+      ? report.growth_areas.join(", ")
+      : "None observed"
+    const suggestions = report.parent_action_suggestions?.length
+      ? report.parent_action_suggestions.join(", ")
+      : "None"
 
     return (
       <Card key={index} className="mb-4">
         <CardHeader className="pb-2">
           <CardTitle className="text-sm font-medium">
             Session {index + 1} -{" "}
-            {new Date(memory.timestamp).toLocaleDateString()}
+            {new Date(report.timestamp).toLocaleDateString()}
           </CardTitle>
-          <CardDescription className="text-xs text-slate-500">
-            {memory.summary || "No summary available"}
-          </CardDescription>
         </CardHeader>
         <CardContent className="pt-2">
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span className="font-medium">Interests:</span>
-              <span className="text-slate-600">{interests}</span>
+              <span className="font-medium">Themes:</span>
+              <span className="text-slate-600">{themes}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="font-medium">Milestones:</span>
-              <span className="text-slate-600">{milestones}</span>
+              <span className="font-medium">Emotional State:</span>
+              <span className="text-slate-600">{emotions}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="font-medium">Growth Areas:</span>
+              <span className="text-slate-600">{growth}</span>
+            </div>
+            <div className="mt-3 pt-3 border-t border-slate-100">
+              <span className="text-sm font-medium text-blue-600">Parent Suggestions:</span>
+              <p className="text-sm text-slate-600 mt-1">{suggestions}</p>
             </div>
           </div>
         </CardContent>

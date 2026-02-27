@@ -75,9 +75,9 @@ We update this file as we make progress.
 - [x] **Task 4: Curriculum Engine (Backend)**
   - [x] Update `llm_service.py` system prompts to strongly enforce grade-level appropriateness.
   - [x] Ensure `core_instructions.md` acts as the primary syllabus constraint before casual chat.
-- [ ] **Task 5: The Confidentiality Protocol ("The Anti-Snitch Protocol")**
-  - [ ] Refactor `run_session_reflection` to extract *themes* and *emotional trends* into `parent_reports.json`, rather than exposing raw child transcripts to parents (protecting child trust).
-  - [ ] Update Parent Dashboard to read from `parent_reports.json`.
+- [x] **Task 5: The Confidentiality Protocol ("The Anti-Snitch Protocol")**
+  - [x] Refactor `run_session_reflection` to extract *themes* and *emotional trends* into `parent_reports.json`, rather than exposing raw child transcripts to parents (protecting child trust).
+  - [x] Update Parent Dashboard to read from `parent_reports.json`.
 - [ ] **Task 6: PWA Implementation (Frontend)**
   - [ ] Add `manifest.json` and meta tags for iOS/Android home screen installation.
 

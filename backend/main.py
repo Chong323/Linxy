@@ -15,8 +15,8 @@ from services.llm_service import (  # noqa: E402
 from services.memory_service import (  # noqa: E402
     add_core_instruction,
     add_episodic_memory,
-    get_episodic_memory,
     get_rewards,
+    get_parent_reports,
 )
 
 app = FastAPI(title="Linxy API")
@@ -118,8 +118,8 @@ async def reflect_endpoint(req: ReflectionRequest):
 @app.get("/parent/reports")
 async def parent_reports_endpoint():
     try:
-        memories = await get_episodic_memory()
-        return {"status": "success", "memories": memories}
+        reports = await get_parent_reports()
+        return {"status": "success", "reports": reports}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

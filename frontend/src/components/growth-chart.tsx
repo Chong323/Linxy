@@ -4,27 +4,29 @@ import { useMemo } from "react"
 import { Bar, BarChart, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from "recharts"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-interface MemoryReport {
+interface ParentReport {
   timestamp: string
-  summary: string
-  interests: string[]
-  milestones: string[]
+  themes: string[]
+  emotional_trends: string[]
+  growth_areas: string[]
+  parent_action_suggestions: string[]
 }
 
-export function GrowthChart({ reports }: { reports: MemoryReport[] }) {
+export function GrowthChart({ reports }: { reports: ParentReport[] }) {
   const chartData = useMemo(() => {
-    const interestCounts: Record<string, number> = {}
+    const themeCounts: Record<string, number> = {}
     reports.forEach((report) => {
-      report.interests?.forEach((interest: string) => {
-        const normalized = interest.toLowerCase()
-        interestCounts[normalized] = (interestCounts[normalized] || 0) + 1
+      // Use themes for the chart
+      report.themes?.forEach((theme: string) => {
+        const normalized = theme.toLowerCase()
+        themeCounts[normalized] = (themeCounts[normalized] || 0) + 1
       })
     })
 
-    return Object.entries(interestCounts)
+    return Object.entries(themeCounts)
       .map(([name, count]) => ({ name, count }))
       .sort((a, b) => b.count - a.count)
-      .slice(0, 5) // Top 5 interests
+      .slice(0, 5) // Top 5 themes
   }, [reports])
 
   if (chartData.length === 0) {
@@ -34,7 +36,7 @@ export function GrowthChart({ reports }: { reports: MemoryReport[] }) {
   return (
     <Card className="mb-6">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">Top Interests Over Time</CardTitle>
+        <CardTitle className="text-sm font-medium">Top Themes Over Time</CardTitle>
         <CardDescription className="text-xs">Based on recent sessions</CardDescription>
       </CardHeader>
       <CardContent>

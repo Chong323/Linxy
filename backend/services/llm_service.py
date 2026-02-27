@@ -12,6 +12,7 @@ from .memory_service import (
     write_episodic_memory,
     get_current_state,
     add_reward,
+    add_parent_report,
 )
 
 # Client automatically picks up GEMINI_API_KEY from environment
@@ -272,9 +273,19 @@ class ReflectionOutput(BaseModel):
     milestones: list[str]
 
 
+class ParentReportOutput(BaseModel):
+    themes: list[str]
+    emotional_trends: list[str]
+    growth_areas: list[str]
+    parent_action_suggestions: list[str]
+
+
 async def run_session_reflection(history: list[dict]) -> dict:
     """
-    Analyzes the chat session and extracts insights (summary, interests, milestones).
+    Analyzes the chat session and extracts insights.
+    Generates BOTH:
+    1. Private episodic memory (detailed) - stored in episodic_memory.json
+    2. Sanitized parent report (themes, emotions, suggestions) - stored in parent_reports.json
     """
     if not history:
         return {
@@ -283,7 +294,8 @@ async def run_session_reflection(history: list[dict]) -> dict:
             "milestones": [],
         }
 
-    system_prompt = """
+    # 1. Generate private episodic memory (detailed)
+    private_prompt = """
 You are an AI assistant analyzing a conversation between a child and their AI companion, Linxy.
 Your goal is to extract key insights from the conversation.
 Provide a brief summary of what was discussed.
@@ -298,8 +310,8 @@ Return the output strictly in JSON format matching the requested schema.
 
     model_id = "gemini-2.5-flash"
 
-    config = types.GenerateContentConfig(
-        system_instruction=system_prompt,
+    private_config = types.GenerateContentConfig(
+        system_instruction=private_prompt,
         temperature=0.2,
         response_mime_type="application/json",
         response_schema=ReflectionOutput,
@@ -317,7 +329,7 @@ Return the output strictly in JSON format matching the requested schema.
     ]
 
     response = client.models.generate_content(
-        model=model_id, contents=contents, config=config
+        model=model_id, contents=contents, config=private_config
     )
 
     result = {
@@ -335,11 +347,62 @@ Return the output strictly in JSON format matching the requested schema.
     except json.JSONDecodeError:
         pass
 
-    # Now, check if we need to run the rolling window summarizer
-    # We will trigger it here in the background, or just await it.
+    # 2. Generate sanitized parent report (themes, emotions, suggestions)
+    await _generate_parent_report(conversation_text)
+
+    # 3. Update long-term summary if needed
     await _update_long_term_summary()
 
     return result
+
+
+async def _generate_parent_report(conversation_text: str):
+    """
+    Generates a sanitized parent report with themes, emotional trends, and suggestions.
+    This protects the child's privacy by NOT exposing raw transcripts.
+    """
+    system_prompt = """
+You are an AI analyst creating a PARENT-FRIENDLY report about a child's session with their AI companion, Linxy.
+
+IMPORTANT: This report will be shown to the PARENTS. It must:
+1. Focus on HIGH-LEVEL THEMES (e.g., "Interest in nature", "Developing social skills")
+2. Describe EMOTIONAL TRENDS (e.g., "Excited", "Curious", "Thoughtful")
+3. Provide ACTIONABLE SUGGESTIONS for parents (e.g., "Try reading a book about dinosaurs together")
+4. NEVER reveal specific conversation details, quotes, or sensitive information
+5. Be concise and encouraging
+
+Return ONLY JSON matching this schema.
+"""
+
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=0.3,
+        response_mime_type="application/json",
+        response_schema=ParentReportOutput,
+    )
+
+    contents = [
+        types.Content(
+            role="user",
+            parts=[
+                types.Part.from_text(
+                    text=f"Generate a parent-friendly report for this session:\n\n{conversation_text[:1000]}..."
+                )
+            ],
+        )
+    ]
+
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash", contents=contents, config=config
+        )
+
+        if response.text:
+            parsed = json.loads(response.text)
+            parsed["timestamp"] = datetime.now(timezone.utc).isoformat()
+            await add_parent_report(parsed)
+    except Exception:
+        pass  # Silently fail - don't break the session reflection
 
 
 async def _update_long_term_summary():

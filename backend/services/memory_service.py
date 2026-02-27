@@ -89,3 +89,19 @@ async def add_reward(sticker: str, reason: str) -> None:
     current_rewards.append(reward_item)
     path = BASE_MEM_DIR / "rewards.json"
     await write_file(path, json.dumps(current_rewards, indent=2))
+
+
+async def get_parent_reports() -> list:
+    path = BASE_MEM_DIR / "parent_reports.json"
+    if not path.exists():
+        return []
+    async with aiofiles.open(path, mode="r") as f:
+        content = await f.read()
+        return json.loads(content) if content else []
+
+
+async def add_parent_report(report: dict) -> None:
+    current_reports = await get_parent_reports()
+    current_reports.append(report)
+    path = BASE_MEM_DIR / "parent_reports.json"
+    await write_file(path, json.dumps(current_reports, indent=2))
