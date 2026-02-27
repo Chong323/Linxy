@@ -10,11 +10,13 @@ from services.llm_service import (  # noqa: E402
     generate_chat_response,
     run_session_reflection,
     generate_parent_chat_response,
+    generate_wakeup_message,
 )
 from services.memory_service import (  # noqa: E402
     add_core_instruction,
     add_episodic_memory,
     get_episodic_memory,
+    get_rewards,
 )
 
 app = FastAPI(title="Linxy API")
@@ -40,6 +42,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     reply: str
+    awarded_sticker: dict | None = None
 
 
 class ParentCommandRequest(BaseModel):
@@ -51,6 +54,24 @@ async def root():
     return {"message": "Welcome to Linxy API - The Digital Bridge"}
 
 
+@app.get("/chat/wakeup")
+async def wakeup_endpoint():
+    try:
+        reply = await generate_wakeup_message()
+        return {"reply": reply}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/child/rewards")
+async def rewards_endpoint():
+    try:
+        rewards = await get_rewards()
+        return {"rewards": rewards}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.post("/chat", response_model=ChatResponse)
 async def chat_endpoint(req: ChatRequest):
     try:
@@ -58,8 +79,18 @@ async def chat_endpoint(req: ChatRequest):
         history_dicts = [
             {"role": msg.role, "content": msg.content} for msg in req.history
         ]
-        reply = await generate_chat_response(req.message, history_dicts)
-        return ChatResponse(reply=reply)
+        result = await generate_chat_response(req.message, history_dicts)
+        
+        # Handle dict response
+        if isinstance(result, dict):
+            return ChatResponse(
+                reply=result.get("reply", ""),
+                awarded_sticker=result.get("awarded_sticker")
+            )
+        else:
+            # Fallback if service returns str (should not happen with updated service)
+            return ChatResponse(reply=str(result))
+            
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -100,7 +131,7 @@ async def parent_chat_endpoint(req: ChatRequest):
             {"role": msg.role, "content": msg.content} for msg in req.history
         ]
         result = await generate_parent_chat_response(req.message, history_dicts)
-        
+
         reply = result.get("reply", "")
         saved_instruction = result.get("saved_instruction")
 
@@ -110,6 +141,7 @@ async def parent_chat_endpoint(req: ChatRequest):
         return ChatResponse(reply=reply)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 

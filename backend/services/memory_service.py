@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from datetime import datetime
 import aiofiles
 
 # MVP setup: local file system
@@ -67,3 +68,24 @@ async def add_episodic_memory(memory_item: dict) -> None:
     current_memories = await get_episodic_memory()
     current_memories.append(memory_item)
     await write_episodic_memory(current_memories)
+
+
+async def get_rewards() -> list[dict]:
+    path = BASE_MEM_DIR / "rewards.json"
+    if not path.exists():
+        return []
+    async with aiofiles.open(path, mode="r") as f:
+        content = await f.read()
+        return json.loads(content) if content else []
+
+
+async def add_reward(sticker: str, reason: str) -> None:
+    current_rewards = await get_rewards()
+    reward_item = {
+        "sticker": sticker,
+        "reason": reason,
+        "timestamp": datetime.now().isoformat(),
+    }
+    current_rewards.append(reward_item)
+    path = BASE_MEM_DIR / "rewards.json"
+    await write_file(path, json.dumps(current_rewards, indent=2))
