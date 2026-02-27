@@ -61,9 +61,9 @@ We update this file as we make progress.
 ## Phase 4: Reliability, Safety, & The "Living Companion" Pivot
 **Goal:** Harden the architecture, add safety guardrails, and transform into a proactive, habit-forming PWA.
 
-- [ ] **Task 1: AI Reliability & Safety Hardening (Critical)**
-  - [ ] **Function Calling Migration:** Replace brittle Regex parsing (`[SAVE_INSTRUCTION]`) with robust Gemini Function Calling / Structured Outputs for parent directives.
-  - [ ] **Guardrails Protocol:** Implement strict system prompt boundaries for crisis detection (self-harm, abuse) and jailbreak prevention.
+- [x] **Task 1: AI Reliability & Safety Hardening (Critical)**
+  - [x] **Function Calling Migration:** Replace brittle Regex parsing (`[SAVE_INSTRUCTION]`) with robust Gemini Function Calling / Structured Outputs for parent directives.
+  - [x] **Guardrails Protocol:** Implement strict system prompt boundaries for crisis detection (self-harm, abuse) and jailbreak prevention.
 - [ ] **Task 2: The "Living" Architecture Upgrade**
   - [ ] Rename `soul.md` to `identity.md` in file system and `memory_service.py`.
   - [ ] Implement `current_state.md` read/write handlers.

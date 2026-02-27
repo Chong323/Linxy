@@ -1,4 +1,3 @@
-import re
 from dotenv import load_dotenv
 
 # Load environment variables FIRST before any other local imports
@@ -100,18 +99,18 @@ async def parent_chat_endpoint(req: ChatRequest):
         history_dicts = [
             {"role": msg.role, "content": msg.content} for msg in req.history
         ]
-        reply = await generate_parent_chat_response(req.message, history_dicts)
+        result = await generate_parent_chat_response(req.message, history_dicts)
+        
+        reply = result.get("reply", "")
+        saved_instruction = result.get("saved_instruction")
 
-        # Intercept the SAVE_INSTRUCTION tag
-        matches = re.findall(r"\[SAVE_INSTRUCTION:\s*(.*?)\]", reply)
-        for instruction in matches:
-            await add_core_instruction(instruction.strip())
-
-        # Remove the tag(s) from the final reply shown to the parent
-        reply = re.sub(r"\[SAVE_INSTRUCTION:\s*.*?\]", "", reply).strip()
+        if saved_instruction:
+            await add_core_instruction(saved_instruction.strip())
 
         return ChatResponse(reply=reply)
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
 
