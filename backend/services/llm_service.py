@@ -37,7 +37,7 @@ async def generate_wakeup_message() -> str:
         recent_memories = memories[-3:]
         for mem in recent_memories:
             recent_memories_text += f"- {mem.get('summary', 'N/A')}\n"
-            if mem.get('interests'):
+            if mem.get("interests"):
                 recent_memories_text += (
                     f"  Interests: {', '.join(mem.get('interests', []))}\n"
                 )
@@ -75,7 +75,8 @@ If there are no specific memories or context to draw from, generate a generic fr
 
     contents = [
         types.Content(
-            role="user", parts=[types.Part.from_text(text="Generate a wake-up message.")]
+            role="user",
+            parts=[types.Part.from_text(text="Generate a wake-up message.")],
         )
     ]
 
@@ -83,7 +84,11 @@ If there are no specific memories or context to draw from, generate a generic fr
         response = client.models.generate_content(
             model=model_id, contents=contents, config=config
         )
-        return response.text if response.text else "Hi! I'm Linxy. What should we do today?"
+        return (
+            response.text
+            if response.text
+            else "Hi! I'm Linxy. What should we do today?"
+        )
     except Exception:
         # Fallback on error
         return "Hi! I'm Linxy. What should we do today?"
@@ -100,8 +105,31 @@ async def generate_chat_response(
     identity = await get_identity()
     instructions = await get_core_instructions()
 
+    # Extract grade level from identity for curriculum enforcement
+    grade_level = "Kindergarten (ages 4-6)"  # Default
+    for line in identity.split("\n"):
+        if "grade level" in line.lower():
+            grade_level = line.split(":", 1)[-1].strip()
+            break
+
     system_prompt = f"""
 {identity}
+
+=== CURRICULUM ENGINE - GRADE-LEVEL ENFORCEMENT ===
+**Grade Level**: {grade_level}
+This is MANDATORY. All content must be age-appropriate for {grade_level}.
+
+1. **VOCABULARY**: Use simple words suitable for this age group. Avoid complex terms.
+2. **CONTENT COMPLEXITY**: 
+   - For Kindergarten-1st: Use basic concepts, lots of pictures/stories, simple counting.
+   - For 2nd-3rd: Introduce slightly more complex ideas, basic reading comprehension.
+   - For 4th-5th: More detailed explanations, light problem-solving.
+3. **TOPIC RESTRICTIONS**: 
+   - Avoid mature topics (death, violence, relationships, politics).
+   - Keep learning fun and play-based.
+4. **PRIORITY**: The parent's core instructions are the PRIMARY syllabus. 
+   You MUST weave educational goals from core_instructions into EVERY conversation.
+   Casual chat is secondary - only after addressing curriculum goals.
 
 === CRITICAL PARENT DIRECTIVES (ACTIVE FOR THIS SESSION) ===
 The following are instructions provided by the child's parent. 
@@ -373,6 +401,14 @@ async def generate_parent_chat_response(
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
     instructions = await get_core_instructions()
+    identity = await get_identity()
+
+    # Extract current grade level
+    current_grade = "Kindergarten (ages 4-6)"
+    for line in identity.split("\n"):
+        if "grade level" in line.lower():
+            current_grade = line.split(":", 1)[-1].strip()
+            break
 
     system_prompt = f"""
 You are Linxy's 'Architect AI'. Your goal is to converse with parents, understand what they want their child to learn, experience, or avoid, and help them draft 'core instructions' for Linxy (the child's digital companion).
@@ -380,12 +416,15 @@ You are Linxy's 'Architect AI'. Your goal is to converse with parents, understan
 Current active instructions for the child:
 {instructions}
 
+Current Grade Level Setting: {current_grade}
+
 IMPORTANT INSTRUCTIONS FOR YOU:
 1. BE CONVERSATIONAL: Do not jump straight into saving an instruction. Ask clarifying questions to understand the parent's exact goals, context, and how they want Linxy to handle it.
 2. DRAFT FIRST: Once you understand what the parent wants, propose a draft of the core instruction. Explicitly ask the parent if it looks good.
 3. WAIT FOR CONFIRMATION: You must wait for the parent to confirm (e.g., "Yes", "Looks good", "Save it") BEFORE saving.
 4. HOW TO SAVE: ONLY when the parent explicitly confirms the drafted instruction, you MUST use the `save_core_instruction` tool to save the exact instruction text.
 5. ACKNOWLEDGE: When you use the tool, you must also provide a conversational text reply letting the parent know the instruction has been saved successfully.
+6. GRADE LEVEL: If the parent wants to change the child's grade level, ask for confirmation and save it in the format "GRADE_LEVEL: <level>" to the core_instructions.
 """
     model_id = "gemini-2.5-flash"
 

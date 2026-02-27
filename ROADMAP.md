@@ -72,9 +72,9 @@ We update this file as we make progress.
   - [x] Create `/chat/wakeup` endpoint for personalized first messages based on `current_state.md`.
   - [x] **Gamification:** Tie wake-up interactions to small digital rewards (e.g., unlocking a virtual sticker for responding).
   - [x] Refactor `ChildChat` to automatically fetch the first message from `/chat/wakeup` on mount.
-- [ ] **Task 4: Curriculum Engine (Backend)**
-  - [ ] Update `llm_service.py` system prompts to strongly enforce grade-level appropriateness.
-  - [ ] Ensure `core_instructions.md` acts as the primary syllabus constraint before casual chat.
+- [x] **Task 4: Curriculum Engine (Backend)**
+  - [x] Update `llm_service.py` system prompts to strongly enforce grade-level appropriateness.
+  - [x] Ensure `core_instructions.md` acts as the primary syllabus constraint before casual chat.
 - [ ] **Task 5: The Confidentiality Protocol ("The Anti-Snitch Protocol")**
   - [ ] Refactor `run_session_reflection` to extract *themes* and *emotional trends* into `parent_reports.json`, rather than exposing raw child transcripts to parents (protecting child trust).
   - [ ] Update Parent Dashboard to read from `parent_reports.json`.

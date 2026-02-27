@@ -80,17 +80,17 @@ async def chat_endpoint(req: ChatRequest):
             {"role": msg.role, "content": msg.content} for msg in req.history
         ]
         result = await generate_chat_response(req.message, history_dicts)
-        
+
         # Handle dict response
         if isinstance(result, dict):
             return ChatResponse(
                 reply=result.get("reply", ""),
-                awarded_sticker=result.get("awarded_sticker")
+                awarded_sticker=result.get("awarded_sticker"),
             )
         else:
             # Fallback if service returns str (should not happen with updated service)
             return ChatResponse(reply=str(result))
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
