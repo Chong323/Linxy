@@ -64,10 +64,10 @@ We update this file as we make progress.
 - [x] **Task 1: AI Reliability & Safety Hardening (Critical)**
   - [x] **Function Calling Migration:** Replace brittle Regex parsing (`[SAVE_INSTRUCTION]`) with robust Gemini Function Calling / Structured Outputs for parent directives.
   - [x] **Guardrails Protocol:** Implement strict system prompt boundaries for crisis detection (self-harm, abuse) and jailbreak prevention.
-- [ ] **Task 2: The "Living" Architecture Upgrade**
-  - [ ] Rename `soul.md` to `identity.md` in file system and `memory_service.py`.
-  - [ ] Implement `current_state.md` read/write handlers.
-  - [ ] **Context Window Optimization:** Implement a rolling-window summarizer. Extract older `episodic_memory.json` entries into a `long_term_summary.md` to prevent LLM token bloat.
+- [x] **Task 2: The "Living" Architecture Upgrade**
+  - [x] Rename `soul.md` to `identity.md` in file system and `memory_service.py`.
+  - [x] Implement `current_state.md` read/write handlers.
+  - [x] **Context Window Optimization:** Implement a rolling-window summarizer. Extract older `episodic_memory.json` entries into a `long_term_summary.md` to prevent LLM token bloat.
 - [ ] **Task 3: Proactive Wake-Up & Gamification (Backend/Frontend)**
   - [ ] Create `/chat/wakeup` endpoint for personalized first messages based on `current_state.md`.
   - [ ] **Gamification:** Tie wake-up interactions to small digital rewards (e.g., unlocking a virtual sticker for responding).

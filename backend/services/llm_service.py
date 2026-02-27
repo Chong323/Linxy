@@ -3,7 +3,14 @@ from google.genai import types
 from pydantic import BaseModel
 import json
 from datetime import datetime, timezone
-from .memory_service import get_soul, get_core_instructions, get_episodic_memory
+from .memory_service import (
+    get_identity,
+    get_core_instructions,
+    get_episodic_memory,
+    get_long_term_summary,
+    write_long_term_summary,
+    write_episodic_memory,
+)
 
 # Client automatically picks up GEMINI_API_KEY from environment
 client = genai.Client()
@@ -14,13 +21,13 @@ async def generate_chat_response(
 ) -> str:
     """
     Generates a chat response using Gemini API, incorporating the
-    Soul persona and parent directives into the system instructions.
+    Identity persona and parent directives into the system instructions.
     """
-    soul = await get_soul()
+    identity = await get_identity()
     instructions = await get_core_instructions()
 
     system_prompt = f"""
-{soul}
+{identity}
 
 === CRITICAL PARENT DIRECTIVES (ACTIVE FOR THIS SESSION) ===
 The following are instructions provided by the child's parent. 
@@ -39,10 +46,18 @@ Do NOT explicitly mention the parent, just guide the conversation toward these g
 
     # Get episodic memory to inject into the conversation
     memories = await get_episodic_memory()
+    long_term_summary = await get_long_term_summary()
+
+    memory_context = ""
+    if long_term_summary:
+        memory_context += f"\n\n=== LONG-TERM SUMMARY ===\n{long_term_summary}\n"
+
     if memories:
-        recent_memories = memories[-3:]  # Last 3 memories
-        memory_context = (
-            "\n\n=== PAST INTERESTS AND MILESTONES (FROM PREVIOUS SESSIONS) ===\n"
+        # Since we use a rolling window, episodic_memory should only have the recent ones,
+        # but just in case, we limit to the last 3.
+        recent_memories = memories[-3:]
+        memory_context += (
+            "\n\n=== RECENT SESSIONS (PAST INTERESTS AND MILESTONES) ===\n"
         )
         for mem in recent_memories:
             memory_context += f"- Summary: {mem.get('summary', 'N/A')}\n"
@@ -54,6 +69,8 @@ Do NOT explicitly mention the parent, just guide the conversation toward these g
                 memory_context += (
                     f"  Milestones: {', '.join(mem.get('milestones', []))}\n"
                 )
+
+    if memory_context:
         system_prompt += memory_context
 
     config = types.GenerateContentConfig(
@@ -138,20 +155,77 @@ Return the output strictly in JSON format matching the requested schema.
         model=model_id, contents=contents, config=config
     )
 
-    try:
-        if response.text:
-            result = json.loads(response.text)
-            result["timestamp"] = datetime.now(timezone.utc).isoformat()
-            return result
-    except json.JSONDecodeError:
-        pass
-
-    return {
+    result = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "summary": "Failed to analyze conversation.",
         "interests": [],
         "milestones": [],
     }
+
+    try:
+        if response.text:
+            parsed = json.loads(response.text)
+            parsed["timestamp"] = datetime.now(timezone.utc).isoformat()
+            result = parsed
+    except json.JSONDecodeError:
+        pass
+
+    # Now, check if we need to run the rolling window summarizer
+    # We will trigger it here in the background, or just await it.
+    await _update_long_term_summary()
+
+    return result
+
+
+async def _update_long_term_summary():
+    """
+    Checks if there are too many episodic memories.
+    If so, extracts the oldest ones, summarizes them with the current long_term_summary,
+    updates long_term_summary.md, and removes them from episodic_memory.json.
+    """
+    memories = await get_episodic_memory()
+    MAX_EPISODES = 5
+    if len(memories) <= MAX_EPISODES:
+        return
+
+    # We want to keep the last 3, so we summarize everything before the last 3
+    episodes_to_summarize = memories[:-3]
+    episodes_to_keep = memories[-3:]
+
+    current_summary = await get_long_term_summary()
+
+    prompt = f"""
+You are an AI tasked with maintaining a long-term memory summary of a child's interactions with an AI companion.
+You will be given the current long-term summary and a list of new episodic memories to integrate.
+Your goal is to produce a concise, updated long-term summary that captures:
+1. Evolving interests over time
+2. Significant developmental milestones reached
+3. Key ongoing themes or habits
+
+Current Long-Term Summary:
+{current_summary if current_summary else "No current summary exists."}
+
+New Episodic Memories to Integrate:
+{json.dumps(episodes_to_summarize, indent=2)}
+
+Please write the updated long-term summary. Keep it concise, organized, and focused on high-level patterns rather than day-to-day details.
+"""
+
+    model_id = "gemini-2.5-flash"
+    config = types.GenerateContentConfig(temperature=0.3)
+
+    contents = [types.Content(role="user", parts=[types.Part.from_text(text=prompt)])]
+    response = client.models.generate_content(
+        model=model_id, contents=contents, config=config
+    )
+
+    new_summary = response.text if response.text else current_summary
+
+    # Save the updated long term summary
+    await write_long_term_summary(new_summary.strip())
+
+    # Update episodic memory to only keep the latest 3
+    await write_episodic_memory(episodes_to_keep)
 
 
 async def generate_parent_chat_response(
@@ -184,32 +258,30 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                 name="save_core_instruction",
                 description="Saves a high-priority educational directive or rule for the child's AI companion. Only call this when the parent has explicitly confirmed the drafted instruction.",
                 parameters=types.Schema(
-                    type=types.Type.OBJECT, # type: ignore
+                    type=types.Type.OBJECT,  # type: ignore
                     properties={
                         "instruction": types.Schema(
-                            type=types.Type.STRING, # type: ignore
-                            description="The exact text of the educational directive to save."
+                            type=types.Type.STRING,  # type: ignore
+                            description="The exact text of the educational directive to save.",
                         )
                     },
-                    required=["instruction"]
-                )
+                    required=["instruction"],
+                ),
             )
         ]
     )
 
     config = types.GenerateContentConfig(
-        system_instruction=system_prompt,
-        temperature=0.7,
-        tools=[tool]
+        system_instruction=system_prompt, temperature=0.7, tools=[tool]
     )
 
     contents = []
     if history:
         for msg in history:
             role = "user" if msg["role"] == "user" else "model"
-            
+
             # Since earlier model responses might have been just text, we map them back.
-            # If the backend stored the function call in history, we'd need more complex parsing, 
+            # If the backend stored the function call in history, we'd need more complex parsing,
             # but currently we only store text in the frontend's message history.
             contents.append(
                 types.Content(
@@ -234,9 +306,12 @@ IMPORTANT INSTRUCTIONS FOR YOU:
             for part in candidate.content.parts:
                 if part.text:
                     reply_text += part.text
-                elif part.function_call and part.function_call.name == "save_core_instruction":
+                elif (
+                    part.function_call
+                    and part.function_call.name == "save_core_instruction"
+                ):
                     args = part.function_call.args or {}
-                    
+
                     # mypy/pyright isn't perfectly able to infer dict types here without cast,
                     # but we can safely ignore or use type ignore or just isinstance.
                     if isinstance(args, dict):
@@ -244,14 +319,11 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                     else:
                         # Fallback if args is not a plain dict (e.g. it's an object)
                         try:
-                            saved_instruction = args.get("instruction") # type: ignore
+                            saved_instruction = args.get("instruction")  # type: ignore
                         except AttributeError:
                             saved_instruction = str(args)
 
     if not reply_text and saved_instruction:
         reply_text = "I have successfully saved the instruction for Linxy."
 
-    return {
-        "reply": reply_text.strip(),
-        "saved_instruction": saved_instruction
-    }
+    return {"reply": reply_text.strip(), "saved_instruction": saved_instruction}

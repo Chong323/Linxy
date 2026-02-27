@@ -19,8 +19,24 @@ async def write_file(path: Path, content: str) -> None:
         await f.write(content)
 
 
-async def get_soul() -> str:
-    return await read_file(BASE_MEM_DIR / "soul.md")
+async def get_identity() -> str:
+    return await read_file(BASE_MEM_DIR / "identity.md")
+
+
+async def get_current_state() -> str:
+    return await read_file(BASE_MEM_DIR / "current_state.md")
+
+
+async def write_current_state(content: str) -> None:
+    await write_file(BASE_MEM_DIR / "current_state.md", content)
+
+
+async def get_long_term_summary() -> str:
+    return await read_file(BASE_MEM_DIR / "long_term_summary.md")
+
+
+async def write_long_term_summary(content: str) -> None:
+    await write_file(BASE_MEM_DIR / "long_term_summary.md", content)
 
 
 async def get_core_instructions() -> str:
