@@ -7,6 +7,8 @@ import { toast } from "sonner"
 import { apiClient } from "@/lib/api-client"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Bot, UserRound } from "lucide-react"
+import { Reward } from "@/types"
+import { RewardsHeader } from "@/components/rewards-header"
 
 type Message = {
   role: "user" | "model"
@@ -14,19 +16,51 @@ type Message = {
 }
 
 export function ChildChat() {
-  const [messages, setMessages] = useState<Message[]>([
-    { role: "model", content: "Hi! I'm Linxy. How are you doing today?" }
-  ])
+  const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [isWakingUp, setIsWakingUp] = useState(true)
   const [isEndingSession, setIsEndingSession] = useState(false)
+  const [rewards, setRewards] = useState<Reward[]>([])
+  const [isLoadingRewards, setIsLoadingRewards] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        const [wakeupRes, rewardsRes] = await Promise.all([
+          apiClient.get("/chat/wakeup"),
+          apiClient.get("/child/rewards")
+        ])
+
+        if (wakeupRes.ok) {
+          const data = await wakeupRes.json()
+          setMessages([{ role: "model", content: data.reply || "Hi! I'm Linxy." }])
+        } else {
+          setMessages([{ role: "model", content: "Hi! I'm Linxy. Ready to chat?" }])
+        }
+
+        if (rewardsRes.ok) {
+          const data = await rewardsRes.json()
+          setRewards(data.rewards || [])
+        }
+      } catch (error) {
+        console.error("Initialization error:", error)
+        setMessages([{ role: "model", content: "Hi! I'm Linxy. Let's chat!" }])
+      } finally {
+        setIsWakingUp(false)
+        setIsLoadingRewards(false)
+      }
+    }
+
+    initializeChat()
+  }, [])
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [messages, isLoading])
+  }, [messages, isLoading, isWakingUp])
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -37,7 +71,6 @@ export function ChildChat() {
     setIsLoading(true)
     
     try {
-      // In a real app we would call the /chat endpoint
       const response = await apiClient.post("/chat", {
         message: input,
         history: messages,
@@ -47,6 +80,14 @@ export function ChildChat() {
       
       if (response.ok && data.reply) {
         setMessages([...newMessages, { role: "model", content: data.reply }])
+        
+        if (data.awarded_sticker) {
+          toast.success("You earned a new sticker!", {
+            description: `You got the ${data.awarded_sticker.name} sticker!`,
+            icon: "⭐"
+          })
+          setRewards(prev => [...prev, data.awarded_sticker])
+        }
       } else {
         setMessages([...newMessages, { role: "model", content: "Oops, something went wrong. Let's try that again!" }])
       }
@@ -86,83 +127,87 @@ export function ChildChat() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-blue-50/50 rounded-lg border border-blue-100 p-4 min-h-0 relative">
-      <div className="absolute top-4 right-4 z-10">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleEndSession}
-          disabled={messages.length <= 1 || isEndingSession || isLoading}
-          className="bg-white/80 hover:bg-white text-blue-600 border-blue-200"
-        >
-          {isEndingSession ? "Saving..." : "End Session"}
-        </Button>
-      </div>
-
-      <div 
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto pr-4 mb-4 space-y-4"
-      >
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`flex w-full gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+    <div className="flex flex-col h-full bg-blue-50/50 rounded-lg border border-blue-100 min-h-0 relative overflow-hidden">
+      <RewardsHeader rewards={rewards} isLoading={isLoadingRewards} />
+      
+      <div className="flex-1 relative min-h-0 flex flex-col">
+        <div className="absolute top-4 right-4 z-10">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleEndSession}
+            disabled={messages.length <= 1 || isEndingSession || isLoading}
+            className="bg-white/80 hover:bg-white text-blue-600 border-blue-200 shadow-sm"
           >
-            {msg.role === "model" && (
+            {isEndingSession ? "Saving..." : "End Session"}
+          </Button>
+        </div>
+
+        <div 
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-4 space-y-4"
+        >
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`flex w-full gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              {msg.role === "model" && (
+                <Avatar className="h-8 w-8 mt-auto">
+                  <AvatarFallback className="bg-blue-100 text-blue-600">
+                    <Bot size={18} />
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <div 
+                className={`max-w-[75%] rounded-2xl p-4 ${
+                  msg.role === "user" 
+                    ? "bg-blue-600 text-white rounded-br-none" 
+                    : "bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-none"
+                }`}
+              >
+                {msg.content}
+              </div>
+              {msg.role === "user" && (
+                <Avatar className="h-8 w-8 mt-auto">
+                  <AvatarFallback className="bg-slate-200 text-slate-600">
+                    <UserRound size={18} />
+                  </AvatarFallback>
+                </Avatar>
+              )}
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex w-full gap-2 justify-start">
               <Avatar className="h-8 w-8 mt-auto">
                 <AvatarFallback className="bg-blue-100 text-blue-600">
                   <Bot size={18} />
                 </AvatarFallback>
               </Avatar>
-            )}
-            <div 
-              className={`max-w-[75%] rounded-2xl p-4 ${
-                msg.role === "user" 
-                  ? "bg-blue-600 text-white rounded-br-none" 
-                  : "bg-white text-slate-800 shadow-sm border border-slate-100 rounded-bl-none"
-              }`}
-            >
-              {msg.content}
+              <div className="bg-white text-slate-500 shadow-sm border border-slate-100 rounded-2xl rounded-bl-none p-4">
+                Linxy is typing...
+              </div>
             </div>
-            {msg.role === "user" && (
-              <Avatar className="h-8 w-8 mt-auto">
-                <AvatarFallback className="bg-slate-200 text-slate-600">
-                  <UserRound size={18} />
-                </AvatarFallback>
-              </Avatar>
-            )}
-          </div>
-        ))}
-        {isLoading && (
-          <div className="flex w-full gap-2 justify-start">
-            <Avatar className="h-8 w-8 mt-auto">
-              <AvatarFallback className="bg-blue-100 text-blue-600">
-                <Bot size={18} />
-              </AvatarFallback>
-            </Avatar>
-            <div className="bg-white text-slate-500 shadow-sm border border-slate-100 rounded-2xl rounded-bl-none p-4">
-              Linxy is typing...
-            </div>
-          </div>
-        )}
-      </div>
-      
-      <div className="flex gap-2 items-center">
-        <Input 
-          className="rounded-full bg-white border-slate-200"
-          placeholder="Type a message to Linxy..." 
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          disabled={isLoading}
-        />
-        <Button 
-          className="rounded-full w-12 h-12 p-0 flex-shrink-0"
-          onClick={handleSend}
-          disabled={!input.trim() || isLoading}
-        >
-          Send
-        </Button>
+          )}
+        </div>
+        
+        <div className="p-4 pt-0 flex gap-2 items-center">
+          <Input 
+            className="rounded-full bg-white border-slate-200"
+            placeholder="Type a message to Linxy..." 
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            disabled={isLoading}
+          />
+          <Button 
+            className="rounded-full w-12 h-12 p-0 flex-shrink-0"
+            onClick={handleSend}
+            disabled={!input.trim() || isLoading}
+          >
+            Send
+          </Button>
+        </div>
       </div>
     </div>
   )
