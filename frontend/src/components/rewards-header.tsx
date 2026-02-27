@@ -8,7 +8,8 @@ interface RewardsHeaderProps {
 }
 
 export function RewardsHeader({ rewards, isLoading }: RewardsHeaderProps) {
-  const getIcon = (name: string) => {
+  const getIcon = (name: string | undefined) => {
+    if (!name) return <Award className="h-4 w-4 text-blue-500 fill-blue-500" />
     const lowerName = name.toLowerCase()
     if (lowerName.includes("star")) return <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
     if (lowerName.includes("trophy")) return <Trophy className="h-4 w-4 text-yellow-600 fill-yellow-600" />
