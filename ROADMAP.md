@@ -61,20 +61,22 @@ We update this file as we make progress.
 ## Phase 4: The "Living Companion" Pivot
 **Goal:** Transform the prototype into a proactive, habit-forming PWA with a structured curriculum hook.
 
-- [ ] **The "Living" Architecture Upgrade**
-  - [ ] Rename `soul.md` concept to `identity.md` and create a dynamic `current_state.md`.
-  - [ ] Build background job or startup routine to populate `current_state.md` with "waking up" context.
-- [ ] **Curriculum Engine (Backend)**
-  - [ ] Add Grade Level setting to Parent Dashboard.
-  - [ ] Update System Prompts to enforce Grade-Level appropriate language and curriculum generation (LLM native).
-  - [ ] Add "Syllabus Injection" text box for parents to paste weekly homework.
-- [ ] **Proactive UX (Frontend)**
-  - [ ] Implement PWA Manifest and Service Workers for installability.
-  - [ ] Implement local push notifications ("Linxy is awake!").
-  - [ ] Refactor Child Chat so the AI *initiates* the first message on load based on `current_state.md`.
-- [ ] **The Confidentiality Protocol**
-  - [ ] Restrict raw chat logs from Parent view.
-  - [ ] Refactor Reflection Agent to generate "Parent-Safe Insights" (hiding specific secrets while showing educational progress).
+- [ ] **Task 1: The "Living" Architecture Upgrade**
+  - [ ] Rename `soul.md` to `identity.md` in file system and `memory_service.py`.
+  - [ ] Implement `current_state.md` read/write handlers in `memory_service.py`.
+- [ ] **Task 2: Proactive Wake-Up (Backend)**
+  - [ ] Create `/chat/wakeup` endpoint to generate a personalized first message based on `current_state.md` and `episodic_memory.json`.
+- [ ] **Task 3: Proactive UX (Frontend)**
+  - [ ] Refactor `ChildChat` to remove the static greeting and automatically fetch the first message from `/chat/wakeup` on mount.
+- [ ] **Task 4: Curriculum Engine (Backend)**
+  - [ ] Update `llm_service.py` system prompts to strongly enforce grade-level appropriateness.
+  - [ ] Ensure `core_instructions.md` acts as the primary syllabus constraint before casual chat.
+- [ ] **Task 5: The Confidentiality Protocol**
+  - [ ] Refactor `run_session_reflection` in `llm_service.py` to generate two outputs: Private `episodic_memory.json` entry and a separate sanitized `parent_reports.json` entry.
+  - [ ] Update Parent Dashboard to read from `parent_reports.json` instead of raw episodic memory.
+- [ ] **Task 6: PWA Implementation (Frontend)**
+  - [ ] Add `manifest.json` and meta tags for iOS/Android home screen installation.
+  - [ ] Add placeholder icons for PWA.
 
 ## Phase 5: Production & Scale
 **Goal:** Move from local MVP to production-ready architecture.
