@@ -58,33 +58,35 @@ We update this file as we make progress.
   - [x] Add child-friendly avatars and interface themes.
   - [x] Improve animations and chat transitions.
 
-## Phase 4: The "Living Companion" Pivot
-**Goal:** Transform the prototype into a proactive, habit-forming PWA with a structured curriculum hook.
+## Phase 4: Reliability, Safety, & The "Living Companion" Pivot
+**Goal:** Harden the architecture, add safety guardrails, and transform into a proactive, habit-forming PWA.
 
-- [ ] **Task 1: The "Living" Architecture Upgrade**
+- [ ] **Task 1: AI Reliability & Safety Hardening (Critical)**
+  - [ ] **Function Calling Migration:** Replace brittle Regex parsing (`[SAVE_INSTRUCTION]`) with robust Gemini Function Calling / Structured Outputs for parent directives.
+  - [ ] **Guardrails Protocol:** Implement strict system prompt boundaries for crisis detection (self-harm, abuse) and jailbreak prevention.
+- [ ] **Task 2: The "Living" Architecture Upgrade**
   - [ ] Rename `soul.md` to `identity.md` in file system and `memory_service.py`.
-  - [ ] Implement `current_state.md` read/write handlers in `memory_service.py`.
-- [ ] **Task 2: Proactive Wake-Up (Backend)**
-  - [ ] Create `/chat/wakeup` endpoint to generate a personalized first message based on `current_state.md` and `episodic_memory.json`.
-- [ ] **Task 3: Proactive UX (Frontend)**
-  - [ ] Refactor `ChildChat` to remove the static greeting and automatically fetch the first message from `/chat/wakeup` on mount.
+  - [ ] Implement `current_state.md` read/write handlers.
+  - [ ] **Context Window Optimization:** Implement a rolling-window summarizer. Extract older `episodic_memory.json` entries into a `long_term_summary.md` to prevent LLM token bloat.
+- [ ] **Task 3: Proactive Wake-Up & Gamification (Backend/Frontend)**
+  - [ ] Create `/chat/wakeup` endpoint for personalized first messages based on `current_state.md`.
+  - [ ] **Gamification:** Tie wake-up interactions to small digital rewards (e.g., unlocking a virtual sticker for responding).
+  - [ ] Refactor `ChildChat` to automatically fetch the first message from `/chat/wakeup` on mount.
 - [ ] **Task 4: Curriculum Engine (Backend)**
   - [ ] Update `llm_service.py` system prompts to strongly enforce grade-level appropriateness.
   - [ ] Ensure `core_instructions.md` acts as the primary syllabus constraint before casual chat.
-- [ ] **Task 5: The Confidentiality Protocol**
-  - [ ] Refactor `run_session_reflection` in `llm_service.py` to generate two outputs: Private `episodic_memory.json` entry and a separate sanitized `parent_reports.json` entry.
-  - [ ] Update Parent Dashboard to read from `parent_reports.json` instead of raw episodic memory.
+- [ ] **Task 5: The Confidentiality Protocol ("The Anti-Snitch Protocol")**
+  - [ ] Refactor `run_session_reflection` to extract *themes* and *emotional trends* into `parent_reports.json`, rather than exposing raw child transcripts to parents (protecting child trust).
+  - [ ] Update Parent Dashboard to read from `parent_reports.json`.
 - [ ] **Task 6: PWA Implementation (Frontend)**
   - [ ] Add `manifest.json` and meta tags for iOS/Android home screen installation.
-  - [ ] Add placeholder icons for PWA.
 
 ## Phase 5: Production & Scale
 **Goal:** Move from local MVP to production-ready architecture.
 
-- [ ] **Database & Auth (Supabase)**
-  - [ ] Replace mock local file system with Supabase Storage for memory files (`soul.md`, etc.).
+- [ ] **Database & Auth (Supabase) - *Solves Concurrency***
+  - [ ] Replace mock local file system (`aiofiles`) with Supabase Storage/PostgreSQL to prevent read/write race conditions during active chats.
   - [ ] Add user authentication (Parent login) via Supabase Auth.
-  - [ ] Setup PostgreSQL for user metadata (if needed beyond file storage).
 - [ ] **Deployment**
   - [ ] Deploy frontend (Vercel).
   - [ ] Deploy backend (Render/Railway).

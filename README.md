@@ -33,11 +33,12 @@ The core differentiator is the file-based memory system, ensuring continuity and
 * **`soul.md`**: Stores the AI's personality, tone, and current mood.
 * **`core_instructions.md`**: Stores high-priority directives from parents (Write-access restricted to Parent Mode).
 * **`episodic_memory.json`**: A timestamped log of significant events and learning milestones, updated by a background "Reflection Agent" after each session.
+* **`long_term_summary.md`** *(Upcoming)*: A rolling-window summary of old episodes to prevent LLM context window bloat as the child continues to use the app over months.
 
 ## Tech Stack
 * **Frontend:** Next.js (TypeScript), Tailwind CSS, Shadcn UI
 * **Backend:** Python (FastAPI)
-* **AI/LLM:** Google Gemini API (`gemini-2.5-flash` for MVP)
+* **AI/LLM:** Google Gemini API (`gemini-2.5-flash` for MVP). Using Structured Outputs/Function Calling for reliable agent tool use.
 * **Database/Storage:** Local File System (MVP) -> migrating to Supabase Storage
 
 ## Getting Started

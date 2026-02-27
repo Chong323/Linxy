@@ -41,12 +41,16 @@ Welcome! You are an AI agent operating in the Linxy repository. Linxy is an AI-p
 - **Typing**: Strict type hinting is mandatory. Use Pydantic models for all API requests/responses.
 - **Async**: Use `async def` for endpoints and I/O bound functions (database, LLM calls, file reading).
 - **Error Handling**: Use FastAPI's `HTTPException` for routing errors. Catch specific exceptions, never bare `except:`.
-- **LLM Integration**: Prefer official SDKs (OpenAI/Anthropic) over heavy frameworks like LangChain for building the prompt context from `soul.md` and memory files.
-- **Storage**: Supabase Storage should be utilized instead of local files or AWS S3 for saving and retrieving user's memory objects (`soul.md`, `episodic_memory.json`, etc.). Keep everything tied into Supabase to maintain a unified infrastructure.
+- **LLM Integration**: Prefer official SDKs (OpenAI/Anthropic). **CRITICAL:** Do NOT use regex to parse structured outputs or commands (like `[SAVE_INSTRUCTION]`). Use Gemini Function Calling / Structured Outputs. This guarantees JSON reliability and avoids brittle string matching.
+- **Safety First**: Always enforce system prompt boundaries. The LLM must have explicit instructions on how to handle crisis topics (e.g., self-harm, abuse) and attempts to jailbreak the persona.
+- **Storage**: Supabase Storage should be utilized instead of local files or AWS S3 for saving and retrieving user's memory objects (`soul.md`, `episodic_memory.json`, etc.). Keep everything tied into Supabase to maintain a unified infrastructure. This is also critical for avoiding `aiofiles` concurrency lock issues.
 - **Imports**: Order imports: Standard library, third-party, local modules.
 - **Naming**: `snake_case` for variables/functions, `PascalCase` for classes.
 
 ### TypeScript / Next.js (Frontend)
+- **Mobile-First App Transition**: This project will eventually become a React Native/Flutter app. **ALL UI must be mobile-first and responsive.** Test designs at mobile breakpoints first.
+- **API Decoupling**: Keep the Next.js frontend completely decoupled from the FastAPI backend. Treat the backend as a pure REST API so a future native app can plug directly into it.
+- **Portable State & Hooks**: Write custom hooks and state management (e.g., React Context) in a portable way. Avoid injecting DOM-specific logic (like direct window/document manipulation) into core business logic hooks so they are easily portable to React Native.
 - **Components**: Use React Server Components by default. Use `"use client"` only when interactivity or hooks (`useState`, `useEffect`) are required.
 - **Styling**: Use Tailwind CSS utility classes. Use Shadcn UI for standard components.
 - **State Management**: Prefer local state or React Context over heavy libraries like Redux unless absolutely necessary.
