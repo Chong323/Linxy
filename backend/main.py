@@ -100,7 +100,7 @@ async def parent_chat_endpoint(req: ChatRequest):
             {"role": msg.role, "content": msg.content} for msg in req.history
         ]
         result = await generate_parent_chat_response(req.message, history_dicts)
-        
+
         reply = result.get("reply", "")
         saved_instruction = result.get("saved_instruction")
 
@@ -110,6 +110,7 @@ async def parent_chat_endpoint(req: ChatRequest):
         return ChatResponse(reply=reply)
     except Exception as e:
         import traceback
+
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
 
