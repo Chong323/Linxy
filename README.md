@@ -41,10 +41,12 @@ The core differentiator is the file-based memory system, ensuring continuity and
 * **`parent_reports.json`**: Sanitized reports for parents (themes, emotional trends, suggestions) - protects child privacy.
 
 ## Tech Stack
-* **Frontend:** Next.js (TypeScript), Tailwind CSS, Shadcn UI
+* **Frontend (Legacy MVP):** Next.js (TypeScript), Tailwind CSS, Shadcn UI
+* **Frontend (Production Mobile):** React Native (Expo) - *In Progress*
 * **Backend:** Python (FastAPI)
-* **AI/LLM:** Google Gemini API (`gemini-2.5-flash` for MVP). Using Structured Outputs/Function Calling for reliable agent tool use.
-* **Database/Storage:** Local File System (MVP) -> migrating to Supabase Storage
+* **AI/LLM:** Google Gemini API (`gemini-2.5-flash`). Using Structured Outputs/Function Calling for reliable agent tool use.
+* **Database/Storage:** Local File System (MVP) -> migrating to Supabase PostgreSQL & Auth
+* **Monetization:** RevenueCat (B2C Subscriptions)
 
 ## Getting Started
 

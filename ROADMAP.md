@@ -81,14 +81,40 @@ We update this file as we make progress.
 - [x] **Task 6: PWA Implementation (Frontend)**
   - [x] Add `manifest.json` and meta tags for iOS/Android home screen installation.
 
-## Phase 5: Production & Scale
-**Goal:** Move from local MVP to production-ready architecture.
+## Phase 5: Production & Scale (Backend Hardening)
+**Goal:** Move from local MVP to a concurrent, production-ready backend architecture.
 
-- [ ] **Database & Auth (Supabase) - *Solves Concurrency***
-  - [ ] Replace mock local file system (`aiofiles`) with Supabase Storage/PostgreSQL to prevent read/write race conditions during active chats.
-  - [ ] Add user authentication (Parent login) via Supabase Auth.
-- [ ] **Deployment**
-  - [ ] Deploy frontend (Vercel).
-  - [ ] Deploy backend (Render/Railway).
-- [ ] **Native Transition (Future)**
-  - [ ] Wrap the validated PWA into a native App (React Native/Flutter).
+- [ ] **Database & Auth Migration (Supabase)**
+  - [ ] Replace mock local file system (`aiofiles`) with Supabase PostgreSQL to prevent read/write race conditions during active chats.
+  - [ ] Add user authentication (Parent accounts) via Supabase Auth.
+  - [ ] Create `Users`, `Profiles`, and `Memories` tables (JSONB for `identity`, `core_instructions`, `episodic_memory`).
+- [ ] **API Security**
+  - [ ] Update FastAPI backend to verify Supabase JWTs.
+  - [ ] Restrict API endpoints to authenticated Parent/Child contexts.
+- [ ] **Backend Deployment**
+  - [ ] Deploy backend to Render/Railway or similar scalable host.
+
+## Phase 6: Full Native Mobile App & Voice
+**Goal:** Transition from PWA to a highly engaging, sticky React Native application.
+
+- [ ] **Mobile Client Initialization**
+  - [ ] Scaffold a new `/mobile` directory using Expo (React Native).
+  - [ ] Implement Dual-Mode UI (Child interface vs PIN-protected Parent dashboard).
+- [ ] **Voice Integration (Crucial for Retention)**
+  - [ ] Integrate native Speech-to-Text (device dictation or Whisper API).
+  - [ ] Integrate low-latency Text-to-Speech (ElevenLabs or OpenAI) for Linxy's voice.
+- [ ] **Advanced Gamification**
+  - [ ] Implement "Daily Streaks" and visual "Sticker Books" for children.
+  - [ ] Connect backend `/chat/wakeup` endpoint to push notifications/in-app events.
+
+## Phase 7: Monetization & Launch
+**Goal:** Implement the B2C Subscription model and submit to App Stores.
+
+- [ ] **Subscription Infrastructure**
+  - [ ] Integrate RevenueCat into the Expo app.
+  - [ ] Configure RevenueCat webhooks in the FastAPI backend to grant "Premium Status".
+- [ ] **Paywalls & Freemium Limits**
+  - [ ] Build in-app paywalls highlighting Parent Insights and premium voice access.
+  - [ ] Enforce usage limits on the Free tier.
+- [ ] **App Store Submission**
+  - [ ] Final QA, Privacy Policy (COPPA compliant), and App Store/Google Play reviews.
