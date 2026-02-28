@@ -20,13 +20,13 @@ def mock_genai_client(monkeypatch):
 @pytest.mark.anyio
 async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypatch):
     # Mock data
-    async def mock_get_identity():
+    async def mock_get_identity(user_id):
         return "I am Linxy, a helpful AI companion."
 
-    async def mock_get_current_state():
+    async def mock_get_current_state(user_id):
         return "The child was learning about dinosaurs."
 
-    async def mock_get_episodic_memory():
+    async def mock_get_episodic_memory(user_id):
         return [{"summary": "Talked about T-Rex", "interests": ["dinosaurs"]}]
 
     # Patch the imported functions in llm_service
@@ -43,7 +43,7 @@ async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypa
     expected_model = "gemini-2.5-flash"
 
     # Call function
-    response = await llm_service.generate_wakeup_message()
+    response = await llm_service.generate_wakeup_message("test_user_id")
 
     # Assertions
     assert response == "Hey! Ready to find more dinosaur bones?"
@@ -62,13 +62,13 @@ async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypa
 @pytest.mark.anyio
 async def test_generate_wakeup_message_fallback(mock_genai_client, monkeypatch):
     # Mock empty data
-    async def mock_get_identity():
+    async def mock_get_identity(user_id):
         return "I am Linxy."
 
-    async def mock_get_current_state():
+    async def mock_get_current_state(user_id):
         return ""
 
-    async def mock_get_episodic_memory():
+    async def mock_get_episodic_memory(user_id):
         return []
 
     monkeypatch.setattr(llm_service, "get_identity", mock_get_identity)
@@ -76,7 +76,7 @@ async def test_generate_wakeup_message_fallback(mock_genai_client, monkeypatch):
     monkeypatch.setattr(llm_service, "get_episodic_memory", mock_get_episodic_memory)
 
     # Call function
-    response = await llm_service.generate_wakeup_message()
+    response = await llm_service.generate_wakeup_message("test_user_id")
 
     # Assertions
     assert response == "Hi! I'm Linxy. What should we do today?"
@@ -90,13 +90,13 @@ async def test_generate_wakeup_message_only_current_state(
     mock_genai_client, monkeypatch
 ):
     # Mock data: No memories, but has current state
-    async def mock_get_identity():
+    async def mock_get_identity(user_id):
         return "I am Linxy."
 
-    async def mock_get_current_state():
+    async def mock_get_current_state(user_id):
         return "The child was building a lego castle."
 
-    async def mock_get_episodic_memory():
+    async def mock_get_episodic_memory(user_id):
         return []
 
     monkeypatch.setattr(llm_service, "get_identity", mock_get_identity)
@@ -109,7 +109,7 @@ async def test_generate_wakeup_message_only_current_state(
     mock_genai_client.models.generate_content.return_value = mock_response
 
     # Call function
-    response = await llm_service.generate_wakeup_message()
+    response = await llm_service.generate_wakeup_message("test_user_id")
 
     # Assertions
     assert response == "Hey! Want to finish that castle?"

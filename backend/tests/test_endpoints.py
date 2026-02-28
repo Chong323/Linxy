@@ -6,14 +6,18 @@ if "GEMINI_API_KEY" not in os.environ:
 
 from fastapi.testclient import TestClient
 from main import app
+from services.auth_service import get_current_user
 import pytest
+
+# Override dependency to return a mock user_id
+app.dependency_overrides[get_current_user] = lambda: "test_user_id"
 
 client = TestClient(app)
 
 
 @pytest.mark.anyio
 async def test_wakeup_endpoint(monkeypatch):
-    async def mock_generate_wakeup():
+    async def mock_generate_wakeup(user_id):
         return "Rise and shine!"
 
     monkeypatch.setattr("main.generate_wakeup_message", mock_generate_wakeup)
@@ -25,7 +29,7 @@ async def test_wakeup_endpoint(monkeypatch):
 
 @pytest.mark.anyio
 async def test_child_rewards_endpoint(monkeypatch):
-    async def mock_get_rewards():
+    async def mock_get_rewards(user_id):
         return [
             {"sticker": "Dino", "reason": "Drawing", "timestamp": "2023-10-27T10:00:00"}
         ]
@@ -49,7 +53,7 @@ async def test_child_rewards_endpoint(monkeypatch):
 
 @pytest.mark.anyio
 async def test_chat_endpoint_with_sticker(monkeypatch):
-    async def mock_generate_chat_response(message, history):
+    async def mock_generate_chat_response(user_id, message, history):
         return {
             "reply": "Here is a sticker for you!",
             "awarded_sticker": {"sticker": "Star", "reason": "Good job!"},

@@ -19,18 +19,18 @@ from .memory_service import (
 client = genai.Client()
 
 
-async def generate_wakeup_message() -> str:
+async def generate_wakeup_message(user_id: str) -> str:
     """
     Generates a proactive wake-up message for the child using Gemini.
     """
-    memories = await get_episodic_memory()
-    current_state = await get_current_state()
+    memories = await get_episodic_memory(user_id)
+    current_state = await get_current_state(user_id)
 
     # Fallback if no memories exist
     if not memories and not current_state:
         return "Hi! I'm Linxy. What should we do today?"
 
-    identity = await get_identity()
+    identity = await get_identity(user_id)
 
     # Extract recent memories (last 3)
     recent_memories_text = ""
@@ -96,15 +96,15 @@ If there are no specific memories or context to draw from, generate a generic fr
 
 
 async def generate_chat_response(
-    message: str, history: list[dict] | None = None
+    user_id: str, message: str, history: list[dict] | None = None
 ) -> dict:
     """
     Generates a chat response using Gemini API, incorporating the
     Identity persona and parent directives into the system instructions.
     Returns a dict with 'reply' and optionally 'awarded_sticker'.
     """
-    identity = await get_identity()
-    instructions = await get_core_instructions()
+    identity = await get_identity(user_id)
+    instructions = await get_core_instructions(user_id)
 
     # Extract grade level from identity for curriculum enforcement
     grade_level = "Kindergarten (ages 4-6)"  # Default
@@ -155,8 +155,8 @@ You have the ability to award digital stickers to the child to reinforce positiv
     model_id = "gemini-2.5-flash"
 
     # Get episodic memory to inject into the conversation
-    memories = await get_episodic_memory()
-    long_term_summary = await get_long_term_summary()
+    memories = await get_episodic_memory(user_id)
+    long_term_summary = await get_long_term_summary(user_id)
 
     memory_context = ""
     if long_term_summary:
@@ -249,7 +249,7 @@ You have the ability to award digital stickers to the child to reinforce positiv
                         if sticker and reason:
                             awarded_sticker = {"sticker": sticker, "reason": reason}
                             # Save it
-                            await add_reward(sticker, reason)
+                            await add_reward(user_id, sticker, reason)
                     else:
                         # Fallback
                         try:
@@ -257,7 +257,7 @@ You have the ability to award digital stickers to the child to reinforce positiv
                             reason = args.get("reason")  # type: ignore
                             if sticker and reason:
                                 awarded_sticker = {"sticker": sticker, "reason": reason}
-                                await add_reward(sticker, reason)
+                                await add_reward(user_id, sticker, reason)
                         except Exception:
                             pass
 
@@ -280,7 +280,7 @@ class ParentReportOutput(BaseModel):
     parent_action_suggestions: list[str]
 
 
-async def run_session_reflection(history: list[dict]) -> dict:
+async def run_session_reflection(user_id: str, history: list[dict]) -> dict:
     """
     Analyzes the chat session and extracts insights.
     Generates BOTH:
@@ -348,15 +348,15 @@ Return the output strictly in JSON format matching the requested schema.
         pass
 
     # 2. Generate sanitized parent report (themes, emotions, suggestions)
-    await _generate_parent_report(conversation_text)
+    await _generate_parent_report(user_id, conversation_text)
 
     # 3. Update long-term summary if needed
-    await _update_long_term_summary()
+    await _update_long_term_summary(user_id)
 
     return result
 
 
-async def _generate_parent_report(conversation_text: str):
+async def _generate_parent_report(user_id: str, conversation_text: str):
     """
     Generates a sanitized parent report with themes, emotional trends, and suggestions.
     This protects the child's privacy by NOT exposing raw transcripts.
@@ -400,18 +400,18 @@ Return ONLY JSON matching this schema.
         if response.text:
             parsed = json.loads(response.text)
             parsed["timestamp"] = datetime.now(timezone.utc).isoformat()
-            await add_parent_report(parsed)
+            await add_parent_report(user_id, parsed)
     except Exception:
         pass  # Silently fail - don't break the session reflection
 
 
-async def _update_long_term_summary():
+async def _update_long_term_summary(user_id: str):
     """
     Checks if there are too many episodic memories.
     If so, extracts the oldest ones, summarizes them with the current long_term_summary,
     updates long_term_summary.md, and removes them from episodic_memory.json.
     """
-    memories = await get_episodic_memory()
+    memories = await get_episodic_memory(user_id)
     MAX_EPISODES = 5
     if len(memories) <= MAX_EPISODES:
         return
@@ -420,7 +420,7 @@ async def _update_long_term_summary():
     episodes_to_summarize = memories[:-3]
     episodes_to_keep = memories[-3:]
 
-    current_summary = await get_long_term_summary()
+    current_summary = await get_long_term_summary(user_id)
 
     prompt = f"""
 You are an AI tasked with maintaining a long-term memory summary of a child's interactions with an AI companion.
@@ -450,21 +450,21 @@ Please write the updated long-term summary. Keep it concise, organized, and focu
     new_summary = response.text if response.text else current_summary
 
     # Save the updated long term summary
-    await write_long_term_summary(new_summary.strip())
+    await write_long_term_summary(user_id, new_summary.strip())
 
     # Update episodic memory to only keep the latest 3
-    await write_episodic_memory(episodes_to_keep)
+    await write_episodic_memory(user_id, episodes_to_keep)
 
 
 async def generate_parent_chat_response(
-    message: str, history: list[dict] | None = None
+    user_id: str, message: str, history: list[dict] | None = None
 ) -> dict:
     """
     Generates a chat response for the Parent Architect AI.
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
-    instructions = await get_core_instructions()
-    identity = await get_identity()
+    instructions = await get_core_instructions(user_id)
+    identity = await get_identity(user_id)
 
     # Extract current grade level
     current_grade = "Kindergarten (ages 4-6)"

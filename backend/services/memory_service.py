@@ -1,107 +1,92 @@
-import json
-from pathlib import Path
+from typing import Any
 from datetime import datetime
-import aiofiles
+from services.supabase_client import get_supabase_client
 
-# MVP setup: local file system
-BASE_MEM_DIR = Path("data/users/mock_user/memory")
+async def read_db_field(user_id: str, field: str, default: Any = "") -> Any:
+    client = get_supabase_client()
+    try:
+        response = client.table("memories").select(field).eq("user_id", user_id).execute()
+        if response.data and len(response.data) > 0:
+            item = response.data[0]
+            if isinstance(item, dict):
+                return item.get(field, default)
+            return default
+    except Exception:
+        pass
+    return default
 
+async def write_db_field(user_id: str, field: str, value: Any) -> None:
+    client = get_supabase_client()
+    data = {"user_id": user_id, field: value}
+    client.table("memories").upsert(data).execute()
 
-async def read_file(path: Path) -> str:
-    if not path.exists():
-        return ""
-    async with aiofiles.open(path, mode="r") as f:
-        return await f.read()
+async def get_identity(user_id: str) -> str:
+    return await read_db_field(user_id, "identity", "")
 
+async def get_current_state(user_id: str) -> str:
+    return await read_db_field(user_id, "current_state", "")
 
-async def write_file(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    async with aiofiles.open(path, mode="w") as f:
-        await f.write(content)
+async def write_current_state(user_id: str, content: str) -> None:
+    await write_db_field(user_id, "current_state", content)
 
+async def get_long_term_summary(user_id: str) -> str:
+    return await read_db_field(user_id, "long_term_summary", "")
 
-async def get_identity() -> str:
-    return await read_file(BASE_MEM_DIR / "identity.md")
+async def write_long_term_summary(user_id: str, content: str) -> None:
+    await write_db_field(user_id, "long_term_summary", content)
 
-
-async def get_current_state() -> str:
-    return await read_file(BASE_MEM_DIR / "current_state.md")
-
-
-async def write_current_state(content: str) -> None:
-    await write_file(BASE_MEM_DIR / "current_state.md", content)
-
-
-async def get_long_term_summary() -> str:
-    return await read_file(BASE_MEM_DIR / "long_term_summary.md")
-
-
-async def write_long_term_summary(content: str) -> None:
-    await write_file(BASE_MEM_DIR / "long_term_summary.md", content)
-
-
-async def get_core_instructions() -> str:
-    return await read_file(BASE_MEM_DIR / "core_instructions.md")
-
-
-async def add_core_instruction(instruction: str) -> None:
-    current = await get_core_instructions()
-    new_content = f"{current}\n- {instruction}".strip()
-    await write_file(BASE_MEM_DIR / "core_instructions.md", new_content)
-
-
-async def get_episodic_memory() -> list:
-    path = BASE_MEM_DIR / "episodic_memory.json"
-    if not path.exists():
+async def get_core_instructions(user_id: str) -> list:
+    res = await read_db_field(user_id, "core_instructions", [])
+    if not isinstance(res, list):
         return []
-    async with aiofiles.open(path, mode="r") as f:
-        content = await f.read()
-        return json.loads(content) if content else []
+    return res
 
+async def add_core_instruction(user_id: str, instruction: str) -> None:
+    current = await get_core_instructions(user_id)
+    # the core_instructions is JSONB but the original code treated it as string
+    # Let's keep it consistent with the schema which says JSONB DEFAULT '[]'
+    if not isinstance(current, list):
+        current = []
+    current.append(instruction)
+    await write_db_field(user_id, "core_instructions", current)
 
-async def write_episodic_memory(memory_list: list) -> None:
-    path = BASE_MEM_DIR / "episodic_memory.json"
-    await write_file(path, json.dumps(memory_list, indent=2))
+async def get_episodic_memory(user_id: str) -> list:
+    res = await read_db_field(user_id, "episodic_memory", [])
+    if not isinstance(res, list):
+        return []
+    return res
 
+async def write_episodic_memory(user_id: str, memory_list: list) -> None:
+    await write_db_field(user_id, "episodic_memory", memory_list)
 
-async def add_episodic_memory(memory_item: dict) -> None:
-    current_memories = await get_episodic_memory()
+async def add_episodic_memory(user_id: str, memory_item: dict) -> None:
+    current_memories = await get_episodic_memory(user_id)
     current_memories.append(memory_item)
-    await write_episodic_memory(current_memories)
+    await write_episodic_memory(user_id, current_memories)
 
-
-async def get_rewards() -> list[dict]:
-    path = BASE_MEM_DIR / "rewards.json"
-    if not path.exists():
+async def get_rewards(user_id: str) -> list[dict]:
+    res = await read_db_field(user_id, "rewards", [])
+    if not isinstance(res, list):
         return []
-    async with aiofiles.open(path, mode="r") as f:
-        content = await f.read()
-        return json.loads(content) if content else []
+    return res
 
-
-async def add_reward(sticker: str, reason: str) -> None:
-    current_rewards = await get_rewards()
+async def add_reward(user_id: str, sticker: str, reason: str) -> None:
+    current_rewards = await get_rewards(user_id)
     reward_item = {
         "sticker": sticker,
         "reason": reason,
         "timestamp": datetime.now().isoformat(),
     }
     current_rewards.append(reward_item)
-    path = BASE_MEM_DIR / "rewards.json"
-    await write_file(path, json.dumps(current_rewards, indent=2))
+    await write_db_field(user_id, "rewards", current_rewards)
 
-
-async def get_parent_reports() -> list:
-    path = BASE_MEM_DIR / "parent_reports.json"
-    if not path.exists():
+async def get_parent_reports(user_id: str) -> list:
+    res = await read_db_field(user_id, "parent_reports", [])
+    if not isinstance(res, list):
         return []
-    async with aiofiles.open(path, mode="r") as f:
-        content = await f.read()
-        return json.loads(content) if content else []
+    return res
 
-
-async def add_parent_report(report: dict) -> None:
-    current_reports = await get_parent_reports()
+async def add_parent_report(user_id: str, report: dict) -> None:
+    current_reports = await get_parent_reports(user_id)
     current_reports.append(report)
-    path = BASE_MEM_DIR / "parent_reports.json"
-    await write_file(path, json.dumps(current_reports, indent=2))
+    await write_db_field(user_id, "parent_reports", current_reports)
