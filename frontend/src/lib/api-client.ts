@@ -1,6 +1,8 @@
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+
 export const apiClient = {
   get: async (endpoint: string, options: RequestInit = {}) => {
-    return fetch(`http://localhost:8000${endpoint}`, {
+    return fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
         "Content-Type": "application/json",
@@ -13,7 +15,7 @@ export const apiClient = {
     data: Record<string, unknown>,
     options: RequestInit = {}
   ) => {
-    return fetch(`http://localhost:8000${endpoint}`, {
+    return fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       method: "POST",
       headers: {
