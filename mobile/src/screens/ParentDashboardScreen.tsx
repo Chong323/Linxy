@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Button } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Props = {
-  navigation: NativeStackNavigationProp<any, any>;
+  navigation: NativeStackNavigationProp<RootStackParamList, 'ParentDashboard'>;
 };
 
 export default function ParentDashboardScreen({ navigation }: Props) {

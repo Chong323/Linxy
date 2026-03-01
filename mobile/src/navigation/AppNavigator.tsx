@@ -4,7 +4,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ChildScreen from '../screens/ChildScreen';
 import ParentDashboardScreen from '../screens/ParentDashboardScreen';
 
-const Stack = createNativeStackNavigator();
+export type RootStackParamList = {
+  Child: undefined;
+  ParentDashboard: undefined;
+};
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function AppNavigator() {
   return (
