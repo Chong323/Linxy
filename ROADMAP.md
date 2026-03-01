@@ -84,13 +84,13 @@ We update this file as we make progress.
 ## Phase 5: Production & Scale (Backend Hardening)
 **Goal:** Move from local MVP to a concurrent, production-ready backend architecture.
 
-- [ ] **Database & Auth Migration (Supabase)**
-  - [ ] Replace mock local file system (`aiofiles`) with Supabase PostgreSQL to prevent read/write race conditions during active chats.
-  - [ ] Add user authentication (Parent accounts) via Supabase Auth.
-  - [ ] Create `Users`, `Profiles`, and `Memories` tables (JSONB for `identity`, `core_instructions`, `episodic_memory`).
-- [ ] **API Security**
-  - [ ] Update FastAPI backend to verify Supabase JWTs.
-  - [ ] Restrict API endpoints to authenticated Parent/Child contexts.
+- [x] **Database & Auth Migration (Supabase)**
+  - [x] Replace mock local file system (`aiofiles`) with Supabase PostgreSQL to prevent read/write race conditions during active chats.
+  - [x] Add user authentication (Parent accounts) via Supabase Auth.
+  - [x] Create `Users`, `Profiles`, and `Memories` tables (JSONB for `identity`, `core_instructions`, `episodic_memory`).
+- [x] **API Security**
+  - [x] Update FastAPI backend to verify Supabase JWTs.
+  - [x] Restrict API endpoints to authenticated Parent/Child contexts.
 - [ ] **Backend Deployment**
   - [ ] Deploy backend to Render/Railway or similar scalable host.
 

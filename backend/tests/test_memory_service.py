@@ -1,8 +1,6 @@
-import json
 import pytest
 from unittest.mock import MagicMock
 from services.memory_service import get_rewards, add_reward
-import services.memory_service as memory_service
 
 @pytest.fixture
 def mock_supabase_client(monkeypatch):
