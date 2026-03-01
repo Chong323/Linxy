@@ -98,7 +98,7 @@ We update this file as we make progress.
 **Goal:** Transition from PWA to a highly engaging, sticky React Native application.
 
 - [ ] **Mobile Client Initialization**
-  - [ ] Scaffold a new `/mobile` directory using Expo (React Native).
+  - [x] Scaffold a new `/mobile` directory using Expo (React Native).
   - [ ] Implement Dual-Mode UI (Child interface vs PIN-protected Parent dashboard).
 - [ ] **Voice Integration (Crucial for Retention)**
   - [ ] Integrate native Speech-to-Text (device dictation or Whisper API).
