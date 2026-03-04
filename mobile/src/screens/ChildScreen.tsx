@@ -1,28 +1,20 @@
 import React from 'react';
-import { View, Text, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Child'>;
-  onRequestParentMode?: () => void;
+  onRequestParentMode: () => void;
 };
 
-export default function ChildScreen({ navigation, onRequestParentMode }: Props) {
-  const handleSwitchToParent = () => {
-    if (onRequestParentMode) {
-      onRequestParentMode();
-    } else {
-      navigation.navigate('ParentDashboard');
-    }
-  };
-
+export default function ChildScreen({ onRequestParentMode }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Linxy Explorer Mode</Text>
       <TouchableOpacity 
         style={styles.parentButton} 
-        onPress={handleSwitchToParent}
+        onPress={onRequestParentMode}
       >
         <Text style={styles.parentButtonText}>👤</Text>
       </TouchableOpacity>

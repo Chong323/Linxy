@@ -1,9 +1,10 @@
 import React from 'react';
+import { render } from '@testing-library/react-native';
+import AppNavigator from '../AppNavigator';
 
-// Simple test that verifies the module can be imported
 describe('AppNavigator', () => {
-  it('module exists and can be imported', () => {
-    // This test verifies the file structure is correct
-    expect(true).toBe(true);
+  it('renders without crashing', () => {
+    const { toJSON } = render(<AppNavigator />);
+    expect(toJSON()).toBeTruthy();
   });
 });

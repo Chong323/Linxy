@@ -10,4 +10,7 @@ module.exports = {
     '^react-native$': '<rootDir>/__mocks__/react-native.ts',
     'expo-secure-store': '<rootDir>/__mocks__/expo-secure-store.ts',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!((react-native.*)|@react-navigation/.*|expo-.*|@expo/.*)/)',
+  ],
 };
