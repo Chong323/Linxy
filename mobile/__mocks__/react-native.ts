@@ -3,6 +3,8 @@ import React from 'react';
 const ReactNative = {
   ...React,
   View: ({ children }: any) => React.createElement('View', null, children),
+  Modal: ({ children, visible }: any) => 
+    visible ? React.createElement('View', { testID: 'modal' }, children) : null,
   ActivityIndicator: (props: any) => React.createElement('ActivityIndicator', props),
   Text: ({ children }: any) => React.createElement('Text', null, children),
   TextInput: (props: any) => React.createElement('TextInput', props),
@@ -37,6 +39,7 @@ export default ReactNative;
 export const {
   View,
   ActivityIndicator,
+  Modal,
   Text,
   TextInput,
   TouchableOpacity,

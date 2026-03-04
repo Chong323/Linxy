@@ -7,15 +7,21 @@ describe('ChildScreen', () => {
     navigate: jest.fn(),
   };
 
+  const mockOnRequestParentMode = jest.fn();
+
   it('renders chat interface', () => {
-    const { getByText } = render(<ChildScreen navigation={mockNavigation as any} />);
+    const { getByText } = render(
+      <ChildScreen navigation={mockNavigation as any} onRequestParentMode={mockOnRequestParentMode} />
+    );
     
     expect(getByText('Linxy Explorer Mode')).toBeTruthy();
   });
 
   it('has button to switch to parent mode', () => {
-    const { getByText } = render(<ChildScreen navigation={mockNavigation as any} />);
+    const { getByText } = render(
+      <ChildScreen navigation={mockNavigation as any} onRequestParentMode={mockOnRequestParentMode} />
+    );
     
-    expect(getByText('Switch to Parent Mode')).toBeTruthy();
+    expect(getByText('👤')).toBeTruthy();
   });
 });
