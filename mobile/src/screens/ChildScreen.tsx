@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import LinxyAvatar, { AvatarState } from '../components/LinxyAvatar';
+
+// Constants
+const MOCK_NETWORK_DELAY_MS = 1500;
+const MOCK_SPEECH_DURATION_MS = 3000;
+const MIC_BUTTON_SIZE = 200;
+const MIC_BUTTON_RADIUS = MIC_BUTTON_SIZE / 2;
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Child'>;
@@ -11,16 +17,36 @@ type Props = {
 
 export default function ChildScreen({ onRequestParentMode }: Props) {
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
+  const networkTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const speechTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handlePressIn = () => setAvatarState('listening');
+  const clearTimers = () => {
+    if (networkTimerRef.current) clearTimeout(networkTimerRef.current);
+    if (speechTimerRef.current) clearTimeout(speechTimerRef.current);
+  };
+
+  useEffect(() => {
+    return clearTimers;
+  }, []);
+
+  const handlePressIn = () => {
+    clearTimers();
+    setAvatarState('listening');
+  };
+
   const handlePressOut = () => {
     setAvatarState('thinking');
-    // Mocking network request delay
-    setTimeout(() => {
+    
+    networkTimerRef.current = setTimeout(() => {
       setAvatarState('speaking');
-      // Mocking audio playback duration
-      setTimeout(() => setAvatarState('idle'), 3000);
-    }, 1500);
+      
+      speechTimerRef.current = setTimeout(() => {
+        setAvatarState('idle');
+        speechTimerRef.current = null;
+      }, MOCK_SPEECH_DURATION_MS);
+      
+      networkTimerRef.current = null;
+    }, MOCK_NETWORK_DELAY_MS);
   };
 
   return (
@@ -70,9 +96,9 @@ const styles = StyleSheet.create({
   },
   micButton: {
     backgroundColor: '#ff6b6b',
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+    width: MIC_BUTTON_SIZE,
+    height: MIC_BUTTON_SIZE,
+    borderRadius: MIC_BUTTON_RADIUS,
     justifyContent: 'center',
     alignItems: 'center',
     elevation: 5,
