@@ -11,17 +11,34 @@ describe('ChildScreen', () => {
 
   it('renders chat interface', () => {
     const { getByText } = render(
-      <ChildScreen navigation={mockNavigation as any} onRequestParentMode={mockOnRequestParentMode} />
+      <ChildScreen
+        navigation={mockNavigation as any}
+        onRequestParentMode={mockOnRequestParentMode}
+      />
     );
-    
+
     expect(getByText('Linxy Explorer Mode')).toBeTruthy();
   });
 
   it('has button to switch to parent mode', () => {
     const { getByText } = render(
-      <ChildScreen navigation={mockNavigation as any} onRequestParentMode={mockOnRequestParentMode} />
+      <ChildScreen
+        navigation={mockNavigation as any}
+        onRequestParentMode={mockOnRequestParentMode}
+      />
     );
-    
-    expect(getByText('👤')).toBeTruthy();
+
+    expect(getByText('👤 Parent Mode')).toBeTruthy();
+  });
+
+  it('has push-to-talk button', () => {
+    const { getByText } = render(
+      <ChildScreen
+        navigation={mockNavigation as any}
+        onRequestParentMode={mockOnRequestParentMode}
+      />
+    );
+
+    expect(getByText('Hold to Speak')).toBeTruthy();
   });
 });
