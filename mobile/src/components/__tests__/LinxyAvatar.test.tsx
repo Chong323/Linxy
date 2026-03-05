@@ -44,6 +44,6 @@ describe('LinxyAvatar', () => {
     const { getByText } = render(<LinxyAvatar currentState={undefined} />);
     
     expect(getByText('🦊')).toBeTruthy();
-    expect(getByText('IDLE')).toBeTruthy(); // Because of currentState?.toUpperCase() || 'IDLE'
+    expect(getByText('IDLE')).toBeTruthy();
   });
 });

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text } from 'react-native';
+import { View, StyleSheet, Text, StyleProp, ViewStyle } from 'react-native';
 
 export type AvatarState = 'idle' | 'listening' | 'thinking' | 'speaking';
 
@@ -19,7 +19,7 @@ const styles = StyleSheet.create({
   label: { marginTop: 10, fontWeight: 'bold' }
 });
 
-const STATE_CONFIG: Record<AvatarState, { emoji: string; label: string; style: any }> = {
+const STATE_CONFIG: Record<AvatarState, { emoji: string; label: string; style: StyleProp<ViewStyle> }> = {
   idle: { emoji: '🦊', label: 'IDLE', style: styles.idle },
   listening: { emoji: '👂', label: 'LISTENING', style: styles.listening },
   thinking: { emoji: '🤔', label: 'THINKING', style: styles.thinking },
@@ -28,7 +28,9 @@ const STATE_CONFIG: Record<AvatarState, { emoji: string; label: string; style: a
 
 export default function LinxyAvatar({ currentState }: Props) {
   // Placeholder for Lottie integration. For MVP, we use text/color blocks to represent state.
-  const config = STATE_CONFIG[currentState] || STATE_CONFIG.idle;
+  const config = Object.prototype.hasOwnProperty.call(STATE_CONFIG, currentState)
+    ? STATE_CONFIG[currentState as AvatarState]
+    : STATE_CONFIG.idle;
 
   return (
     <View style={[styles.container, config.style]}>
