@@ -15,7 +15,7 @@ const styles = StyleSheet.create({
   listening: { borderColor: 'green', backgroundColor: '#e0ffe0' },
   thinking: { borderColor: 'orange', backgroundColor: '#ffefe0' },
   speaking: { borderColor: 'blue', backgroundColor: '#e0e0ff' },
-  emoji: { fontSize: 50 },
+  emoji: { fontSize: AVATAR_SIZE / 3 },
   label: { marginTop: 10, fontWeight: 'bold' }
 });
 
@@ -29,7 +29,7 @@ const STATE_CONFIG: Record<AvatarState, { emoji: string; label: string; style: S
 export default function LinxyAvatar({ currentState }: Props) {
   // Placeholder for Lottie integration. For MVP, we use text/color blocks to represent state.
   const config = Object.prototype.hasOwnProperty.call(STATE_CONFIG, currentState)
-    ? STATE_CONFIG[currentState as AvatarState]
+    ? STATE_CONFIG[currentState]
     : STATE_CONFIG.idle;
 
   return (
