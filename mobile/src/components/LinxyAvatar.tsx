@@ -7,25 +7,6 @@ interface Props {
   currentState: AvatarState;
 }
 
-export default function LinxyAvatar({ currentState }: Props) {
-  // Placeholder for Lottie integration. For MVP, we use text/color blocks to represent state.
-  const getStateEmoji = () => {
-    switch(currentState) {
-      case 'listening': return '👂';
-      case 'thinking': return '🤔';
-      case 'speaking': return '🗣️';
-      case 'idle': default: return '🦊';
-    }
-  };
-
-  return (
-    <View style={[styles.container, styles[currentState] || styles.idle]}>
-      <Text style={styles.emoji}>{getStateEmoji()}</Text>
-      <Text style={styles.label}>{currentState?.toUpperCase() || 'IDLE'}</Text>
-    </View>
-  );
-}
-
 const AVATAR_SIZE = 150;
 
 const styles = StyleSheet.create({
@@ -37,3 +18,22 @@ const styles = StyleSheet.create({
   emoji: { fontSize: 50 },
   label: { marginTop: 10, fontWeight: 'bold' }
 });
+
+const STATE_CONFIG: Record<AvatarState, { emoji: string; label: string; style: any }> = {
+  idle: { emoji: '🦊', label: 'IDLE', style: styles.idle },
+  listening: { emoji: '👂', label: 'LISTENING', style: styles.listening },
+  thinking: { emoji: '🤔', label: 'THINKING', style: styles.thinking },
+  speaking: { emoji: '🗣️', label: 'SPEAKING', style: styles.speaking },
+};
+
+export default function LinxyAvatar({ currentState }: Props) {
+  // Placeholder for Lottie integration. For MVP, we use text/color blocks to represent state.
+  const config = STATE_CONFIG[currentState] || STATE_CONFIG.idle;
+
+  return (
+    <View style={[styles.container, config.style]}>
+      <Text style={styles.emoji}>{config.emoji}</Text>
+      <Text style={styles.label}>{config.label}</Text>
+    </View>
+  );
+}

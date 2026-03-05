@@ -36,7 +36,7 @@ describe('LinxyAvatar', () => {
     const { getByText } = render(<LinxyAvatar currentState="invalid_state" />);
     
     expect(getByText('🦊')).toBeTruthy();
-    expect(getByText('INVALID_STATE')).toBeTruthy();
+    expect(getByText('IDLE')).toBeTruthy();
   });
 
   it('handles undefined state gracefully', () => {
