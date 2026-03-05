@@ -1,30 +1,39 @@
-from fastapi import APIRouter, File, UploadFile, Depends, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel
+import base64
 from services.auth_service import get_current_user
+from services.llm_service import generate_chat_response
+from services.voice_service import generate_speech
 
 router = APIRouter()
 
 
+class VoiceRequest(BaseModel):
+    text: str
+
+
+class VoiceResponse(BaseModel):
+    text: str
+    audio_base64: str | None
+    status: str
+
+
 @router.post("/chat/voice")
 async def process_voice(
-    audio: UploadFile = File(...), user_id: str = Depends(get_current_user)
+    request: VoiceRequest, user_id: str = Depends(get_current_user)
 ):
     try:
-        if not audio.content_type.startswith("audio/"):
-            raise HTTPException(status_code=400, detail="File must be audio")
+        if not request.text or not request.text.strip():
+            raise HTTPException(status_code=400, detail="Text cannot be empty")
 
-        # Stub for Phase 6:
-        # 1. Send 'audio' to Whisper STT -> text
-        # 2. Send text to Gemini -> response text
-        # 3. Send response text to ElevenLabs TTS -> output audio
-        # 4. Return audio file
+        chat_result = await generate_chat_response(user_id, request.text)
+        reply_text = chat_result.get("reply", "")
 
-        return JSONResponse(
-            content={
-                "status": "mock_success",
-                "transcribed_text": "Hello Linxy",
-                "response_text": "Hi there!",
-            }
+        audio_bytes = await generate_speech(reply_text)
+        audio_base64 = base64.b64encode(audio_bytes).decode("utf-8")
+
+        return VoiceResponse(
+            text=reply_text, audio_base64=audio_base64, status="success"
         )
     except HTTPException:
         raise
