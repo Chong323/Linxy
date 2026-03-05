@@ -101,6 +101,9 @@ We update this file as we make progress.
   - [x] Scaffold a new `/mobile` directory using Expo (React Native).
   - [ ] Implement Dual-Mode UI (Child interface vs PIN-protected Parent dashboard).
 - [ ] **Voice Integration (Crucial for Retention)**
+  - [x] Create FastAPI endpoint stub for voice processing (`/chat/voice`).
+  - [x] Create Avatar Component with State (Idle, Listening, Thinking, Speaking).
+  - [x] Implement Push-To-Talk Interface in mobile.
   - [ ] Integrate native Speech-to-Text (device dictation or Whisper API).
   - [ ] Integrate low-latency Text-to-Speech (ElevenLabs or OpenAI) for Linxy's voice.
 - [ ] **Advanced Gamification**
