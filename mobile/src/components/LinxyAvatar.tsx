@@ -19,15 +19,17 @@ export default function LinxyAvatar({ currentState }: Props) {
   };
 
   return (
-    <View style={[styles.container, styles[currentState]]}>
+    <View style={[styles.container, styles[currentState] || styles.idle]}>
       <Text style={styles.emoji}>{getStateEmoji()}</Text>
-      <Text style={styles.label}>{currentState.toUpperCase()}</Text>
+      <Text style={styles.label}>{currentState?.toUpperCase() || 'IDLE'}</Text>
     </View>
   );
 }
 
+const AVATAR_SIZE = 150;
+
 const styles = StyleSheet.create({
-  container: { width: 150, height: 150, borderRadius: 75, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
+  container: { width: AVATAR_SIZE, height: AVATAR_SIZE, borderRadius: AVATAR_SIZE / 2, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
   idle: { borderColor: 'gray', backgroundColor: '#f0f0f0' },
   listening: { borderColor: 'green', backgroundColor: '#e0ffe0' },
   thinking: { borderColor: 'orange', backgroundColor: '#ffefe0' },
