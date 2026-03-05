@@ -19,8 +19,11 @@ from services.memory_service import (  # noqa: E402
     get_rewards,
     get_parent_reports,
 )
+from routers.voice import router as voice_router  # noqa: E402
 
 app = FastAPI(title="Linxy API")
+
+app.include_router(voice_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -101,7 +104,9 @@ class ReflectionRequest(BaseModel):
 
 
 @app.post("/chat/reflect")
-async def reflect_endpoint(req: ReflectionRequest, user_id: str = Depends(get_current_user)):
+async def reflect_endpoint(
+    req: ReflectionRequest, user_id: str = Depends(get_current_user)
+):
     try:
         history_dicts = [
             {"role": msg.role, "content": msg.content} for msg in req.history
@@ -126,12 +131,16 @@ async def parent_reports_endpoint(user_id: str = Depends(get_current_user)):
 
 
 @app.post("/parent/chat", response_model=ChatResponse)
-async def parent_chat_endpoint(req: ChatRequest, user_id: str = Depends(get_current_user)):
+async def parent_chat_endpoint(
+    req: ChatRequest, user_id: str = Depends(get_current_user)
+):
     try:
         history_dicts = [
             {"role": msg.role, "content": msg.content} for msg in req.history
         ]
-        result = await generate_parent_chat_response(user_id, req.message, history_dicts)
+        result = await generate_parent_chat_response(
+            user_id, req.message, history_dicts
+        )
 
         reply = result.get("reply", "")
         saved_instruction = result.get("saved_instruction")
@@ -148,7 +157,9 @@ async def parent_chat_endpoint(req: ChatRequest, user_id: str = Depends(get_curr
 
 
 @app.post("/parent/command")
-async def parent_command_endpoint(req: ParentCommandRequest, user_id: str = Depends(get_current_user)):
+async def parent_command_endpoint(
+    req: ParentCommandRequest, user_id: str = Depends(get_current_user)
+):
     try:
         await add_core_instruction(user_id, req.command)
         return {"status": "success", "message": "Directive added to memory."}
