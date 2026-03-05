@@ -30,34 +30,6 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
     stopListening();
   };
 
-  const processVoice = useCallback(async (text: string) => {
-    setAvatarState('thinking');
-    setTranscript(text);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/chat/voice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ text }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (data.audio_base64) {
-        await playAudio(data.audio_base64);
-      }
-    } catch (err) {
-      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to process voice');
-      setAvatarState('idle');
-    }
-  }, [playAudio]);
-
   const playAudio = useCallback(async (base64: string) => {
     try {
       if (sound) {
@@ -87,6 +59,34 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
       setAvatarState('idle');
     }
   }, [sound]);
+
+  const processVoice = useCallback(async (text: string) => {
+    setAvatarState('thinking');
+    setTranscript(text);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat/voice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.audio_base64) {
+        await playAudio(data.audio_base64);
+      }
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to process voice');
+      setAvatarState('idle');
+    }
+  }, [playAudio]);
 
   useEffect(() => {
     if (!isListening && voiceTranscript) {
