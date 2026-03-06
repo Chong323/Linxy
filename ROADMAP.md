@@ -97,10 +97,10 @@ We update this file as we make progress.
 ## Phase 6: Full Native Mobile App & Voice
 **Goal:** Transition from PWA to a highly engaging, sticky React Native application.
 
-- [ ] **Mobile Client Initialization**
+- [x] **Mobile Client Initialization**
   - [x] Scaffold a new `/mobile` directory using Expo (React Native).
-  - [ ] Implement Dual-Mode UI (Child interface vs PIN-protected Parent dashboard).
-- [ ] **Voice Integration (Crucial for Retention)**
+  - [x] Implement Dual-Mode UI (Child interface vs PIN-protected Parent dashboard).
+- [x] **Voice Integration (Crucial for Retention)**
   - [x] Create FastAPI endpoint stub for voice processing (`/chat/voice`).
   - [x] Create Avatar Component with State (Idle, Listening, Thinking, Speaking).
   - [x] Implement Push-To-Talk Interface in mobile.

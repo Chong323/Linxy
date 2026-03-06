@@ -42,7 +42,7 @@ The core differentiator is the file-based memory system, ensuring continuity and
 
 ## Tech Stack
 * **Frontend (Legacy MVP):** Next.js (TypeScript), Tailwind CSS, Shadcn UI
-* **Frontend (Production Mobile):** React Native (Expo) - *In Progress*
+* **Frontend (Production Mobile):** React Native (Expo)
 * **Backend:** Python (FastAPI)
 * **AI/LLM:** Google Gemini API (`gemini-2.5-flash`). Using Structured Outputs/Function Calling for reliable agent tool use.
 * **Database/Storage:** Local File System (MVP) -> migrating to Supabase PostgreSQL & Auth
@@ -65,10 +65,18 @@ fastapi dev main.py
 ```
 
 ### 2. Frontend Setup
+**Web Legacy Dashboard:**
 ```bash
 cd frontend
 npm install
 npm run dev
+```
+
+**Mobile Native App (Expo):**
+```bash
+cd mobile
+npm install
+npm start
 ```
 
 ### 3. Usage
