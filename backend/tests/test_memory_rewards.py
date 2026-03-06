@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 from services import memory_service
 from datetime import datetime
 
+
 @pytest.fixture
 def mock_supabase_client(monkeypatch):
     mock_client = MagicMock()
@@ -21,8 +22,11 @@ def mock_supabase_client(monkeypatch):
     # Set up default empty response
     mock_execute.data = []
 
-    monkeypatch.setattr("services.memory_service.get_supabase_client", lambda: mock_client)
+    monkeypatch.setattr(
+        "services.memory_service.get_supabase_client", lambda: mock_client
+    )
     return mock_client, mock_execute, mock_upsert
+
 
 @pytest.mark.anyio
 async def test_add_and_get_reward(mock_supabase_client):
@@ -40,7 +44,7 @@ async def test_add_and_get_reward(mock_supabase_client):
     # We can inspect the mock call
     args, kwargs = mock_client.table().upsert.call_args
     upserted_data = args[0]
-    
+
     mock_execute.data = [{"rewards": upserted_data["rewards"]}]
 
     rewards = await memory_service.get_rewards("test_user_id")
@@ -77,6 +81,6 @@ async def test_rewards_persistence(mock_supabase_client):
 async def test_get_rewards_empty(mock_supabase_client):
     mock_client, mock_execute, mock_upsert = mock_supabase_client
     mock_execute.data = []
-    
+
     rewards = await memory_service.get_rewards("test_user_id")
     assert rewards == []

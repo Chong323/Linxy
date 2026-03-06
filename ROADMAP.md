@@ -104,8 +104,8 @@ We update this file as we make progress.
   - [x] Create FastAPI endpoint stub for voice processing (`/chat/voice`).
   - [x] Create Avatar Component with State (Idle, Listening, Thinking, Speaking).
   - [x] Implement Push-To-Talk Interface in mobile.
-  - [ ] Integrate native Speech-to-Text (device dictation or Whisper API).
-  - [ ] Integrate low-latency Text-to-Speech (ElevenLabs or OpenAI) for Linxy's voice.
+  - [x] Integrate native Speech-to-Text (react-native-voice).
+  - [x] Integrate low-latency Text-to-Speech (ElevenLabs).
 - [ ] **Advanced Gamification**
   - [ ] Implement "Daily Streaks" and visual "Sticker Books" for children.
   - [ ] Connect backend `/chat/wakeup` endpoint to push notifications/in-app events.
