@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, TextInput } from 'react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import LinxyAvatar, { AvatarState } from '../components/LinxyAvatar';
@@ -8,7 +8,6 @@ import { Audio } from 'expo-av';
 import { API_BASE_URL } from '../config';
 
 const MIC_BUTTON_SIZE = 200;
-const MIC_BUTTON_RADIUS = MIC_BUTTON_SIZE / 2;
 
 type Props = {
   navigation: NativeStackNavigationProp<RootStackParamList, 'Child'>;
@@ -19,6 +18,8 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [transcript, setTranscript] = useState('');
+  const [inputMode, setInputMode] = useState<'voice' | 'type'>('voice');
+  const [textInput, setTextInput] = useState('');
   const { isListening, transcript: voiceTranscript, error, startListening, stopListening } = useVoiceInput();
 
   const handlePressIn = () => {
@@ -88,6 +89,12 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
     }
   }, [playAudio]);
 
+  const handleSendText = async () => {
+    if (!textInput.trim()) return;
+    await processVoice(textInput.trim());
+    setTextInput('');
+  };
+
   useEffect(() => {
     if (!isListening && voiceTranscript) {
       processVoice(voiceTranscript);
@@ -95,105 +102,100 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
   }, [isListening, voiceTranscript, processVoice]);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Linxy Explorer Mode</Text>
-
-      <LinxyAvatar currentState={avatarState} style={styles.avatar} />
-
-      {transcript ? (
-        <Text style={styles.transcript}>&quot;{transcript}&quot;</Text>
-      ) : null}
-
-      {error ? (
-        <Text style={styles.errorText}>Error: {error}</Text>
-      ) : null}
-
+    <View className="flex-1 bg-[#f0f8ff] px-6">
       <TouchableOpacity
-        style={[
-          styles.micButton,
-          isListening && styles.micButtonListening,
-        ]}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.micText}>
-          {isListening ? 'Listening...' : 'Hold to Speak'}
-        </Text>
-      </TouchableOpacity>
-
-      <TouchableOpacity
-        style={styles.parentButton}
+        className="absolute top-12 right-6 bg-white/80 px-4 py-2 rounded-full z-10"
         onPress={onRequestParentMode}
       >
-        <Text style={styles.parentButtonText}>👤 Parent Mode</Text>
+        <Text className="text-base font-semibold text-gray-600">👤 Parent Mode</Text>
       </TouchableOpacity>
+
+      <Text className="text-2xl font-bold text-center text-gray-800 pt-12">
+        Linxy Explorer Mode
+      </Text>
+
+      <View className="flex-[0.6] items-center justify-center">
+        <LinxyAvatar currentState={avatarState} size={180} />
+      </View>
+
+      <View className="flex-[0.2] items-center justify-center px-6">
+        {transcript ? (
+          <Text className="text-base text-gray-600 text-center italic px-4">
+            &quot;{transcript}&quot;
+          </Text>
+        ) : null}
+
+        {error ? (
+          <Text className="text-sm text-red-500 text-center">Error: {error}</Text>
+        ) : null}
+      </View>
+
+      <View className="flex-[0.2] items-center justify-center w-full pb-8">
+        <View className="flex-row items-center mb-4">
+          <Text className="text-sm font-semibold text-gray-600 mr-2">
+            {inputMode === 'voice' ? 'Voice' : 'Text'} Mode
+          </Text>
+          <TouchableOpacity
+            className={`px-4 py-2 rounded-full ${
+              inputMode === 'voice' ? 'bg-blue-500' : 'bg-gray-300'
+            }`}
+            onPress={() => setInputMode('voice')}
+          >
+            <Text className={`text-sm font-semibold ${
+              inputMode === 'voice' ? 'text-white' : 'text-gray-600'
+            }`}>
+              🎤
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            className={`px-4 py-2 rounded-full ml-2 ${
+              inputMode === 'type' ? 'bg-blue-500' : 'bg-gray-300'
+            }`}
+            onPress={() => setInputMode('type')}
+          >
+            <Text className={`text-sm font-semibold ${
+              inputMode === 'type' ? 'text-white' : 'text-gray-600'
+            }`}>
+              ⌨️
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {inputMode === 'type' ? (
+          <View className="flex-row items-center w-full max-w-sm">
+            <TextInput returnKeyType="send" onSubmitEditing={handleSendText}
+              className="flex-1 bg-white border border-gray-300 rounded-l-full px-6 py-3 text-base"
+              placeholder="Type your message..."
+              value={textInput}
+              onChangeText={setTextInput}
+            />
+            <TouchableOpacity
+              className="bg-blue-500 px-6 py-3 rounded-r-full"
+              onPress={handleSendText} accessibilityLabel="Send Message"
+            >
+              <Text className="text-white font-bold text-base">Send</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity
+            className={`items-center justify-center rounded-full ${
+              isListening ? 'bg-green-500 scale-105' : 'bg-[#ff6b6b]'
+            }`}
+            style={{
+              width: MIC_BUTTON_SIZE,
+              height: MIC_BUTTON_SIZE,
+              borderRadius: MIC_BUTTON_SIZE / 2,
+            }}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            activeOpacity={0.7}
+          >
+            <Text className="text-white text-lg font-bold text-center">
+              {isListening ? 'Listening...' : 'Hold to Speak'}
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#f0f8ff',
-    paddingVertical: 60,
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#333',
-    textAlign: 'center',
-  },
-  avatar: {
-    marginVertical: 40,
-  },
-  transcript: {
-    fontSize: 16,
-    color: '#555',
-    textAlign: 'center',
-    fontStyle: 'italic',
-    paddingHorizontal: 20,
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#ff4444',
-    textAlign: 'center',
-  },
-  micButton: {
-    backgroundColor: '#ff6b6b',
-    width: MIC_BUTTON_SIZE,
-    height: MIC_BUTTON_SIZE,
-    borderRadius: MIC_BUTTON_RADIUS,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  micButtonListening: {
-    backgroundColor: '#4CAF50',
-    transform: [{ scale: 1.05 }],
-  },
-  micText: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-  },
-  parentButton: {
-    padding: 15,
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 30,
-    marginTop: 20,
-  },
-  parentButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#555',
-  },
-});
