@@ -63,7 +63,7 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
 
   const processVoice = useCallback(async (text: string) => {
     setAvatarState('thinking');
-    setTranscript(text);
+    setTranscript(`You: ${text}`);
 
     try {
       const response = await fetch(`${API_BASE_URL}/chat/voice`, {
@@ -80,8 +80,12 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
 
       const data = await response.json();
       
+      setTranscript(`Linxy: ${data.text}`);
+
       if (data.audio_base64) {
         await playAudio(data.audio_base64);
+      } else {
+        setAvatarState('idle');
       }
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to process voice');
@@ -91,8 +95,32 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
 
   const handleSendText = async () => {
     if (!textInput.trim()) return;
-    await processVoice(textInput.trim());
-    setTextInput('');
+
+    setAvatarState('thinking');
+    setTranscript(`You: ${text}`);
+    setTranscript('');
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: textInput.trim() }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setTranscript(`Linxy: ${data.reply}`);
+      setAvatarState('idle');
+      setTextInput('');
+    } catch (err) {
+      Alert.alert('Error', err instanceof Error ? err.message : 'Failed to send message');
+      setAvatarState('idle');
+    }
   };
 
   useEffect(() => {
