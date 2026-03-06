@@ -63,7 +63,7 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
 
   const processVoice = useCallback(async (text: string) => {
     setAvatarState('thinking');
-    setTranscript(`You: ${text}`);
+    setTranscript(`You: ${textInput}`);
 
     try {
       const response = await fetch(`${API_BASE_URL}/chat/voice`, {
@@ -97,7 +97,7 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
     if (!textInput.trim()) return;
 
     setAvatarState('thinking');
-    setTranscript(`You: ${text}`);
+    setTranscript(`You: ${textInput}`);
     setTranscript('');
 
     try {
