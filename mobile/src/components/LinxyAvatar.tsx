@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, Text, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, StyleProp, ViewStyle } from 'react-native';
 
 export type AvatarState = 'idle' | 'listening' | 'thinking' | 'speaking';
 
@@ -10,46 +10,31 @@ interface Props {
 }
 
 const DEFAULT_SIZE = 150;
-const BORDER_WIDTH = 2;
-const LABEL_MARGIN_TOP = 10;
-
-const COLORS = {
-  idle: { border: 'gray', bg: '#f0f0f0' },
-  listening: { border: 'green', bg: '#e0ffe0' },
-  thinking: { border: 'orange', bg: '#ffefe0' },
-  speaking: { border: 'blue', bg: '#e0e0ff' },
-};
-
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: BORDER_WIDTH,
-  },
-  idle: { borderColor: COLORS.idle.border, backgroundColor: COLORS.idle.bg },
-  listening: {
-    borderColor: COLORS.listening.border,
-    backgroundColor: COLORS.listening.bg,
-  },
-  thinking: {
-    borderColor: COLORS.thinking.border,
-    backgroundColor: COLORS.thinking.bg,
-  },
-  speaking: {
-    borderColor: COLORS.speaking.border,
-    backgroundColor: COLORS.speaking.bg,
-  },
-  label: { marginTop: LABEL_MARGIN_TOP, fontWeight: 'bold' },
-});
 
 const STATE_CONFIG: Record<
   AvatarState,
-  { emoji: string; label: string; style: StyleProp<ViewStyle> }
+  { emoji: string; label: string; className: string }
 > = {
-  idle: { emoji: '🦊', label: 'IDLE', style: styles.idle },
-  listening: { emoji: '👂', label: 'LISTENING', style: styles.listening },
-  thinking: { emoji: '🤔', label: 'THINKING', style: styles.thinking },
-  speaking: { emoji: '🗣️', label: 'SPEAKING', style: styles.speaking },
+  idle: {
+    emoji: '🦊',
+    label: 'IDLE',
+    className: 'border-gray-400 bg-gray-100',
+  },
+  listening: {
+    emoji: '👂',
+    label: 'LISTENING',
+    className: 'border-green-500 bg-green-100 animate-pulse',
+  },
+  thinking: {
+    emoji: '🤔',
+    label: 'THINKING',
+    className: 'border-orange-500 bg-orange-100',
+  },
+  speaking: {
+    emoji: '🗣️',
+    label: 'SPEAKING',
+    className: 'border-blue-500 bg-blue-100',
+  },
 };
 
 export default function LinxyAvatar({
@@ -57,7 +42,6 @@ export default function LinxyAvatar({
   size = DEFAULT_SIZE,
   style,
 }: Props) {
-  // Placeholder for Lottie integration. For MVP, we use text/color blocks to represent state.
   const isValid = ['idle', 'listening', 'thinking', 'speaking'].includes(
     currentState as string
   );
@@ -65,20 +49,30 @@ export default function LinxyAvatar({
     ? STATE_CONFIG[currentState as AvatarState]
     : STATE_CONFIG.idle;
 
-  const dynamicStyle = {
-    width: size,
-    height: size,
-    borderRadius: Math.round(size / 2),
-  };
-
-  const emojiStyle = {
-    fontSize: Math.round(size / 3),
-  };
-
   return (
-    <View style={[styles.container, dynamicStyle, config.style, style]}>
-      <Text style={emojiStyle}>{config.emoji}</Text>
-      <Text style={styles.label}>{config.label}</Text>
+    <View
+      className={`flex items-center justify-center rounded-full border-2 ${config.className}`}
+      style={[
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+        },
+        style,
+      ]}
+    >
+      <Text
+        className="font-bold"
+        style={{ fontSize: size / 3, marginTop: size / 15 }}
+      >
+        {config.emoji}
+      </Text>
+      <Text
+        className="font-bold"
+        style={{ marginTop: size / 15, fontSize: size / 6 }}
+      >
+        {config.label}
+      </Text>
     </View>
   );
 }
