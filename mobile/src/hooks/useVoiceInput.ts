@@ -1,41 +1,29 @@
 import { useState, useEffect, useCallback } from 'react';
-import Voice, { SpeechResultsEvent, SpeechErrorEvent } from '@react-native-voice/voice';
+import { ExpoSpeechRecognitionModule, useSpeechRecognitionEvent } from 'expo-speech-recognition';
 
 export function useVoiceInput() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    Voice.onSpeechStart = () => {
-      setIsListening(true);
-    };
-
-    Voice.onSpeechEnd = () => {
-      setIsListening(false);
-    };
-
-    Voice.onSpeechError = (e: SpeechErrorEvent) => {
-      setError(e.error?.message || 'Speech recognition error');
-      setIsListening(false);
-    };
-
-    Voice.onSpeechResults = (e: SpeechResultsEvent) => {
-      if (e.value && e.value[0]) {
-        setTranscript(e.value[0]);
-      }
-    };
-
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
-  }, []);
+  useSpeechRecognitionEvent('start', () => setIsListening(true));
+  useSpeechRecognitionEvent('end', () => setIsListening(false));
+  useSpeechRecognitionEvent('result', (event) => {
+    setTranscript(event.results[0]?.transcript || '');
+  });
+  useSpeechRecognitionEvent('error', (event) => {
+    setError(event.error);
+    setIsListening(false);
+  });
 
   const startListening = useCallback(async () => {
     setError(null);
     setTranscript('');
     try {
-      await Voice.start('en-US');
+      const result = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (result.granted) {
+        await ExpoSpeechRecognitionModule.start({ lang: 'en-US' });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start voice input');
     }
@@ -43,7 +31,7 @@ export function useVoiceInput() {
 
   const stopListening = useCallback(async () => {
     try {
-      await Voice.stop();
+      await ExpoSpeechRecognitionModule.stop();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to stop voice input');
     }
