@@ -8,18 +8,17 @@
 
 ## Overview
 
-Migrate the Linxy mobile app from deprecated `expo-av` to `expo-audio` and fix NativeWind v4 configuration for proper Tailwind CSS styling.
+Migrate the Linxy mobile app from deprecated `expo-av` to `expo-audio` for TTS playback. NativeWind v4 configuration and Tailwind class usage in `ChildScreen.tsx` are already correct — only the audio migration remains.
 
 ## Goals
 
 1. Replace deprecated `expo-av` with modern `expo-audio` for TTS playback
-2. Fix NativeWind v4 configuration to restore Tailwind classes
-3. Restore original UI design with proper styling
 
 ## Non-Goals
 
 - Changing the UI layout or design
 - Modifying speech recognition (already uses `expo-speech-recognition`)
+- NativeWind v4 configuration (already correctly set up)
 - Backend changes
 
 ---
@@ -32,7 +31,7 @@ Migrate the Linxy mobile app from deprecated `expo-av` to `expo-audio` and fix N
 ChildScreen.tsx
 ├── expo-av (Audio.Sound) - DEPRECATED
 ├── expo-speech-recognition (voice input)
-└── NativeWind v4 (misconfigured, inline styles as workaround)
+└── NativeWind v4 (correctly configured, Tailwind className in use)
 ```
 
 ### Target State
@@ -41,7 +40,7 @@ ChildScreen.tsx
 ChildScreen.tsx
 ├── expo-audio (useAudioPlayer hook) - MODERN
 ├── expo-speech-recognition (voice input)
-└── NativeWind v4 (properly configured, Tailwind classes)
+└── NativeWind v4 (no change needed)
 ```
 
 ---
@@ -53,10 +52,10 @@ ChildScreen.tsx
 | expo-av | expo-audio |
 |---------|------------|
 | `Audio.Sound.createAsync()` | `useAudioPlayer()` hook |
-| `sound.playAsync()` | `player.play()` |
-| `sound.unloadAsync()` | `player.unload()` (automatic cleanup) |
-| `sound.setOnPlaybackStatusUpdate()` | `player.state` (reactive) |
-| `status.didJustFinish` | `player.state === 'finished'` |
+| `sound.playAsync()` | `player.play()` (synchronous, not async) |
+| `sound.unloadAsync()` | automatic cleanup on unmount |
+| `sound.setOnPlaybackStatusUpdate()` | `useAudioPlayerStatus(player)` hook |
+| `status.didJustFinish` | `status.didJustFinish` via `useAudioPlayerStatus` |
 
 ### Implementation
 
@@ -79,82 +78,53 @@ const playAudio = async (base64: string) => {
 
 **After (expo-audio):**
 ```typescript
-import { useAudioPlayer } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 
-const player = useAudioPlayer(audioUri);
+// Initialize with no source — source is set dynamically per response
+const player = useAudioPlayer();
+const status = useAudioPlayerStatus(player);
 
-const playAudio = async (base64: string) => {
+const playAudio = (base64: string) => {
   const dataUri = `data:audio/mp3;base64,${base64}`;
-  player.replace(dataUri);
-  await player.play();
+  // replace() takes a source object, not a bare string
+  player.replace({ uri: dataUri });
+  // play() is synchronous, not async
+  player.play();
 };
+
+// Detect playback completion
+useEffect(() => {
+  if (status.didJustFinish) {
+    // handle post-playback state (e.g., return avatar to idle)
+  }
+}, [status.didJustFinish]);
 ```
+
+**Important notes:**
+- `player.replace({ uri })` takes a **source object** `{ uri: string }`, not a bare string.
+- `player.play()` is **not async** and does not return a Promise.
+- Use `useAudioPlayerStatus(player)` to track playback state reactively.
+- `expo-audio` cleans up automatically on component unmount — no manual `unloadAsync` needed.
+- Data URIs (`data:audio/mp3;base64,...`) are supported on iOS via the same underlying `AVPlayer`. Verify this works before completing the migration.
 
 ---
 
 ## Component 2: NativeWind v4 Configuration
 
-### Required Files
+**Status: Already complete. No changes required.**
 
-1. **`global.css`** - Tailwind entry point
-2. **`App.tsx`** - Must import `./global.css`
-3. **`nativewind-env.d.ts`** - TypeScript declarations
-4. **`babel.config.js`** - Already configured correctly
-5. **`metro.config.js`** - Already configured correctly
-6. **`tailwind.config.js`** - Already configured correctly
+All NativeWind v4 configuration files are correctly set up:
 
-### Configuration Changes
+| File | Status | Notes |
+|------|--------|-------|
+| `global.css` | Correct | Has `@tailwind base/components/utilities` directives |
+| `App.tsx` | Correct | `import './global.css'` is already the first import |
+| `nativewind-env.d.ts` | Correct | `/// <reference types="nativewind/types" />` |
+| `babel.config.js` | Correct | `jsxImportSource: "nativewind"` + `nativewind/babel` preset |
+| `metro.config.js` | Correct | `withNativeWind(config, { input: './global.css' })` |
+| `tailwind.config.js` | Correct | `nativewind/preset`, content scanning `App.tsx` + `src/**` |
 
-**`global.css`:**
-```css
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-```
-
-**`App.tsx`:**
-```typescript
-import './global.css';  // Must be first import
-```
-
-**`nativewind-env.d.ts`:**
-```typescript
-/// <reference types="nativewind/preset" />
-```
-
-### Styling Classes
-
-**ChildScreen Layout:**
-```typescript
-<View className="flex-1 bg-sky-50 px-6">
-  {/* Parent Mode Button */}
-  <TouchableOpacity className="absolute top-12 right-6 bg-white/80 px-4 py-2 rounded-full z-10">
-    <Text className="text-base font-semibold text-gray-600">Parent Mode</Text>
-  </TouchableOpacity>
-
-  {/* Title */}
-  <Text className="text-2xl font-bold text-center text-gray-800 pt-12">
-    Linxy Explorer Mode
-  </Text>
-
-  {/* Avatar - 60% flex */}
-  <View className="flex-[0.6] items-center justify-center">
-    <LinxyAvatar currentState={avatarState} size={180} />
-  </View>
-
-  {/* Transcript - 20% flex */}
-  <View className="flex-[0.2] items-center justify-center px-6">
-    <Text className="text-base text-gray-600 text-center italic px-4">
-      "{transcript}"
-    </Text>
-  </View>
-
-  {/* Input - 20% flex */}
-  <View className="flex-[0.2] items-center justify-center w-full pb-8">
-    {/* Voice/Type toggle and Mic button */}
-  </View>
-</View>
-```
+`ChildScreen.tsx` already uses `className` throughout — no inline style migration needed.
 
 ---
 
@@ -189,7 +159,7 @@ import './global.css';  // Must be first import
 
 | Element | Tailwind Class | Hex |
 |---------|---------------|-----|
-| Background | `bg-sky-50` | #f0f8ff |
+| Background | `bg-sky-50` | #f0f9ff |
 | Primary button | `bg-blue-500` | #3B82F6 |
 | Mic button (idle) | `bg-red-400` | #f87171 |
 | Mic button (listening) | `bg-green-500` | #22C55E |
@@ -201,28 +171,28 @@ import './global.css';  // Must be first import
 
 ## Implementation Tasks
 
-### Task 1: Install Dependencies
-- Remove `expo-av`
-- Install `expo-audio`
+### Task 1: Install expo-audio
+- Use `expo install expo-audio` (not bare `npm install`) to get the SDK-compatible version
+- Remove `expo-av` from `package.json` dependencies
 
-### Task 2: Fix NativeWind v4 Configuration
-- Update `global.css`
-- Add import in `App.tsx`
-- Verify `nativewind-env.d.ts`
+### ~~Task 2: Fix NativeWind v4 Configuration~~
+- **Already done.** All config files and `ChildScreen.tsx` className usage are correct.
 
-### Task 3: Migrate ChildScreen to expo-audio
-- Update imports
-- Replace Audio.Sound with useAudioPlayer
-- Update playback logic
+### Task 2: Migrate ChildScreen to expo-audio
+- Update imports: remove `expo-av`, add `useAudioPlayer` and `useAudioPlayerStatus` from `expo-audio`
+- Remove `useState` for sound object
+- Initialize `useAudioPlayer()` with no source
+- Update `playAudio` function: use `player.replace({ uri })` + `player.play()` (synchronous)
+- Replace `setOnPlaybackStatusUpdate` callback with `useAudioPlayerStatus` + `useEffect`
 
-### Task 4: Restore Tailwind Styles
-- Replace inline `style` with `className`
-- Verify 60/20/20 layout
+### ~~Task 3: Restore Tailwind Styles~~
+- **Already done.** `ChildScreen.tsx` already uses `className` throughout.
 
-### Task 5: Rebuild and Test
+### Task 3: Rebuild and Test
 - `npx expo prebuild --clean`
 - `npx expo run:ios`
-- Test voice input and TTS playback
+- **First:** Verify base64 data URI playback works with `expo-audio` before full cleanup
+- Test voice input and TTS playback end-to-end
 
 ---
 
@@ -230,20 +200,21 @@ import './global.css';  // Must be first import
 
 | File | Action | Changes |
 |------|--------|---------|
-| `package.json` | Modify | Remove expo-av, add expo-audio |
-| `App.tsx` | Modify | Add `import './global.css'` |
-| `global.css` | Verify | Ensure Tailwind directives |
-| `nativewind-env.d.ts` | Verify | Ensure type reference |
-| `ChildScreen.tsx` | Modify | Migrate to expo-audio, restore Tailwind classes |
+| `package.json` | Modify | Remove `expo-av`, add `expo-audio` (via `expo install`) |
+| `ChildScreen.tsx` | Modify | Migrate audio logic to `useAudioPlayer` / `useAudioPlayerStatus` |
+| `App.tsx` | No change | Already imports `./global.css` |
+| `global.css` | No change | Already correct |
+| `nativewind-env.d.ts` | No change | Already correct (`nativewind/types`) |
 
 ---
 
 ## Testing
 
-1. **Visual Test:** Verify UI renders with correct Tailwind styles
-2. **Manual Test:** Press mic button, speak, verify TTS playback
-3. **Text Mode Test:** Verify text input still works
-4. **State Test:** Verify avatar state changes correctly
+1. **Audio Test:** Verify base64 data URI (`data:audio/mp3;base64,...`) plays correctly via `expo-audio`
+2. **Visual Test:** Verify UI renders with correct Tailwind styles
+3. **Manual Test:** Press mic button, speak, verify TTS playback
+4. **Text Mode Test:** Verify text input still works
+5. **State Test:** Verify avatar state changes correctly (idle → thinking → speaking → idle)
 
 ---
 
@@ -251,9 +222,9 @@ import './global.css';  // Must be first import
 
 | Risk | Mitigation |
 |------|------------|
-| NativeWind v4 still has issues | Test early, have StyleSheet fallback |
-| expo-audio base64 support differs | Verify data URI works before full migration |
-| Prebuild fails again | Keep patch-package as backup for expo-av |
+| `expo-audio` base64 data URI support differs from `expo-av` | Test data URI playback as the very first step before removing `expo-av` |
+| Prebuild fails | Keep `expo-av` in package until migration is verified, then remove |
+| `player.play()` not awaitable breaks sequential logic | Use `useAudioPlayerStatus` + `useEffect` for post-playback callbacks instead of `await` |
 
 ---
 
@@ -264,4 +235,4 @@ import './global.css';  // Must be first import
 - [ ] Voice input works (press mic, speak, transcript appears)
 - [ ] TTS playback works (Linxy responds with audio)
 - [ ] Text mode input works
-- [ ] Avatar animates based on state
+- [ ] Avatar animates based on state (idle → thinking → speaking → idle)
