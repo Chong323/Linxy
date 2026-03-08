@@ -4,7 +4,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../navigation/AppNavigator';
 import LinxyAvatar, { AvatarState } from '../components/LinxyAvatar';
 import { useVoiceInput } from '../hooks/useVoiceInput';
-import { Audio } from 'expo-av';
+import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { API_BASE_URL } from '../config';
 
 const MIC_BUTTON_SIZE = 200;
@@ -16,11 +16,13 @@ type Props = {
 
 export default function ChildScreen({ onRequestParentMode }: Props) {
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [transcript, setTranscript] = useState('');
   const [inputMode, setInputMode] = useState<'voice' | 'type'>('voice');
   const [textInput, setTextInput] = useState('');
   const { isListening, transcript: voiceTranscript, error, startListening, stopListening } = useVoiceInput();
+
+  const player = useAudioPlayer();
+  const status = useAudioPlayerStatus(player);
 
   const handlePressIn = () => {
     setTranscript('');
@@ -31,35 +33,23 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
     stopListening();
   };
 
-  const playAudio = useCallback(async (base64: string) => {
+  useEffect(() => {
+    if (status.didJustFinish) {
+      setAvatarState('idle');
+    }
+  }, [status.didJustFinish]);
+
+  const playAudio = useCallback((base64: string) => {
     try {
-      if (sound) {
-        await sound.unloadAsync();
-      }
-
       const dataUri = `data:audio/mp3;base64,${base64}`;
-      const { sound: newSound } = await Audio.Sound.createAsync(
-        { uri: dataUri },
-        { shouldPlay: true }
-      );
-
-      setSound(newSound);
-
-      newSound.setOnPlaybackStatusUpdate((status) => {
-        if (status.isLoaded && status.didJustFinish) {
-          setAvatarState('idle');
-          newSound.unloadAsync();
-          setSound(null);
-        }
-      });
-
+      player.replace({ uri: dataUri });
       setAvatarState('speaking');
-      await newSound.playAsync();
+      player.play();
     } catch (err) {
       Alert.alert('Error', err instanceof Error ? err.message : 'Failed to play audio');
       setAvatarState('idle');
     }
-  }, [sound]);
+  }, [player]);
 
   const processVoice = useCallback(async (text: string) => {
     setAvatarState('thinking');
@@ -83,7 +73,7 @@ export default function ChildScreen({ onRequestParentMode }: Props) {
       setTranscript(`Linxy: ${data.text}`);
 
       if (data.audio_base64) {
-        await playAudio(data.audio_base64);
+        playAudio(data.audio_base64);
       } else {
         setAvatarState('idle');
       }
