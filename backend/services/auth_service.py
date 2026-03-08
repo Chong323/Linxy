@@ -6,6 +6,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 security = HTTPBearer()
 
+# Allow both HS256 (symmetric) and RS256 (asymmetric) algorithms
+# Supabase uses HS256 by default for anon/service_role tokens
+ALLOWED_ALGORITHMS = ["HS256", "RS256"]
+
 
 def get_jwt_secret() -> str | bytes:
     """Get JWT secret, decoding from base64 if necessary."""
@@ -29,10 +33,21 @@ def get_current_user(
 ) -> str:
     token = credentials.credentials
     
+    # Debug: Log token header to see algorithm
+    try:
+        header = jwt.get_unverified_header(token)
+        print(f"[Auth] Token algorithm: {header.get('alg')}")
+    except Exception as e:
+        print(f"[Auth] Could not parse token header: {e}")
+    
     try:
         secret = get_jwt_secret()
         payload = jwt.decode(
-            token, secret, algorithms=["HS256"], audience="authenticated"
+            token, 
+            secret, 
+            algorithms=ALLOWED_ALGORITHMS, 
+            audience="authenticated",
+            options={"verify_signature": True}
         )
         user_id = payload.get("sub")
         if user_id is None:
@@ -40,6 +55,7 @@ def get_current_user(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid auth credentials: no sub claim",
             )
+        print(f"[Auth] Authenticated user: {user_id}")
         return user_id
     except jwt.ExpiredSignatureError:
         raise HTTPException(
@@ -48,12 +64,14 @@ def get_current_user(
             headers={"WWW-Authenticate": "Bearer"},
         )
     except jwt.InvalidTokenError as e:
+        print(f"[Auth] Invalid token error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid token: {str(e)}",
             headers={"WWW-Authenticate": "Bearer"},
         )
     except Exception as e:
+        print(f"[Auth] Unexpected error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Could not validate credentials: {str(e)}",
