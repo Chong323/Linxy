@@ -13,7 +13,20 @@ def get_current_user(
     
     # Allow dev bypass for local testing only
     env = os.environ.get("ENV", "production")
-    if env == "development" and token == "dev-token":
+    if env == "development":
+        # Try to decode real token first, fallback to dev-user if it fails
+        try:
+            secret = os.environ.get("SUPABASE_JWT_SECRET", "")
+            if secret:
+                payload = jwt.decode(
+                    token, secret, algorithms=["HS256"], audience="authenticated"
+                )
+                user_id = payload.get("sub")
+                if user_id:
+                    return user_id
+        except:
+            pass
+        # Fallback to extracting user from token or use dev-user
         return "dev-user-123"
     
     secret = os.environ.get("SUPABASE_JWT_SECRET", "")
