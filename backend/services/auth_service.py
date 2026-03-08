@@ -10,6 +10,11 @@ def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     token = credentials.credentials
+    
+    # Allow dev bypass for local testing
+    if token == "dev-token":
+        return "dev-user-123"
+    
     secret = os.environ.get("SUPABASE_JWT_SECRET", "")
     if not secret:
         raise ValueError("Supabase JWT secret not found.")
