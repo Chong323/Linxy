@@ -11,8 +11,9 @@ def get_current_user(
 ) -> str:
     token = credentials.credentials
     
-    # Allow dev bypass for local testing
-    if token == "dev-token":
+    # Allow dev bypass for local testing only
+    env = os.environ.get("ENV", "production")
+    if env == "development" and token == "dev-token":
         return "dev-user-123"
     
     secret = os.environ.get("SUPABASE_JWT_SECRET", "")
