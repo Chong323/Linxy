@@ -1,16 +1,34 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
 
-const getHeaders = () => ({
-  "Content-Type": "application/json",
-  "Authorization": "Bearer dev-token",
-})
+// Token getter - will be set by AuthProvider
+let getAuthToken: (() => Promise<string | null>) | null = null
+
+export function setAuthTokenGetter(getter: () => Promise<string | null>) {
+  getAuthToken = getter
+}
+
+async function getHeaders() {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  }
+  
+  // Add auth token if available
+  if (getAuthToken) {
+    const token = await getAuthToken()
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`
+    }
+  }
+  
+  return headers
+}
 
 export const apiClient = {
   get: async (endpoint: string, options: RequestInit = {}) => {
     return fetch(`${API_BASE_URL}${endpoint}`, {
       ...options,
       headers: {
-        ...getHeaders(),
+        ...await getHeaders(),
         ...options.headers,
       },
     })
@@ -24,7 +42,7 @@ export const apiClient = {
       ...options,
       method: "POST",
       headers: {
-        ...getHeaders(),
+        ...await getHeaders(),
         ...options.headers,
       },
       body: JSON.stringify(data),
