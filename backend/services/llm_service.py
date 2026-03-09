@@ -493,8 +493,7 @@ IMPORTANT INSTRUCTIONS FOR YOU:
 3. WAIT FOR CONFIRMATION: You must wait for the parent to confirm (e.g., "Yes", "Looks good", "Save it") BEFORE saving.
 4. HOW TO SAVE: ONLY when the parent explicitly confirms the drafted instruction, you MUST use the `save_core_instruction` tool to save the exact instruction text.
 5. ACKNOWLEDGE: When you use the tool, you must also provide a conversational text reply letting the parent know the instruction has been saved successfully.
-6. GRADE LEVEL: If the parent wants to change the child's grade level, ask for confirmation and save it in the format "GRADE_LEVEL: <level>" to the core_instructions.
-7. IDENTITY UPDATES: If the parent wants to change the child's grade level, name, or the AI's name/persona, use the `update_identity` tool.
+6. IDENTITY UPDATES: If the parent wants to change the child's grade level, name, or the AI's name/persona, use the `update_identity` tool.
 """
     model_id = "gemini-2.5-flash"
 
