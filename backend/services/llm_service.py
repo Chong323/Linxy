@@ -470,20 +470,22 @@ async def generate_parent_chat_response(
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
     identity_dict = await get_identity_dict(user_id)
+    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
+    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
     child_name = identity_dict.get("user", {}).get("name", "the child")
     grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
     
     instructions = await get_core_instructions(user_id)
 
     system_prompt = f"""
-You are Linxy's 'Architect AI'. Your goal is to converse with parents, understand what they want their child to learn, experience, or avoid, and help them draft 'core instructions' for Linxy (the child's digital companion).
+You are {ai_name}, {ai_persona}
+Your goal is to converse with parents, understand what they want their child to learn, experience, or avoid, and help them draft 'core instructions' for Linxy (the child's digital companion).
 
 Child's Name: {child_name}
+Grade Level: {grade_level}
 
 Current active instructions for the child:
 {instructions}
-
-Current Grade Level Setting: {grade_level}
 
 IMPORTANT INSTRUCTIONS FOR YOU:
 1. BE CONVERSATIONAL: Do not jump straight into saving an instruction. Ask clarifying questions to understand the parent's exact goals, context, and how they want Linxy to handle it.

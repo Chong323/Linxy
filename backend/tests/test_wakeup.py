@@ -65,8 +65,11 @@ async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypa
 @pytest.mark.anyio
 async def test_generate_wakeup_message_fallback(mock_genai_client, monkeypatch):
     # Mock empty data
-    async def mock_get_identity(user_id):
-        return "I am Linxy."
+    async def mock_get_identity_dict(user_id):
+        return {
+            "ai": {"name": "Linxy", "persona": "a friendly AI companion."},
+            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"}
+        }
 
     async def mock_get_current_state(user_id):
         return ""
@@ -74,7 +77,7 @@ async def test_generate_wakeup_message_fallback(mock_genai_client, monkeypatch):
     async def mock_get_episodic_memory(user_id):
         return []
 
-    monkeypatch.setattr(llm_service, "get_identity", mock_get_identity)
+    monkeypatch.setattr(llm_service, "get_identity_dict", mock_get_identity_dict)
     monkeypatch.setattr(llm_service, "get_current_state", mock_get_current_state)
     monkeypatch.setattr(llm_service, "get_episodic_memory", mock_get_episodic_memory)
 
@@ -137,7 +140,6 @@ async def test_generate_wakeup_message_with_structured_identity(mock_genai_clien
             "user": {"name": "Tommy", "grade_level": "1st Grade"}
         }
     monkeypatch.setattr(llm_service, "get_identity_dict", mock_get_identity_dict)
-    monkeypatch.setattr(llm_service, "get_identity", lambda u: "")
     
     async def mock_get_current_state(user_id):
         return "The child was learning about dinosaurs."
