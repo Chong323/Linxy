@@ -82,6 +82,7 @@ export function ChildChat() {
       })
       
       const data = await response.json()
+      console.log("[Chat] Response:", response.status, data)
       
       if (response.ok && data.reply) {
         setMessages([...newMessages, { role: "model", content: data.reply }])

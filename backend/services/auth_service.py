@@ -1,14 +1,41 @@
 import os
 import jwt
 import base64
+import httpx
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 security = HTTPBearer()
 
-# Allow both HS256 (symmetric) and RS256 (asymmetric) algorithms
-# Supabase uses HS256 by default for anon/service_role tokens
-ALLOWED_ALGORITHMS = ["HS256", "RS256"]
+# Cache for JWKS
+_jwks_cache = None
+
+
+async def fetch_jwks():
+    """Fetch JWKS from Supabase."""
+    global _jwks_cache
+    if _jwks_cache:
+        return _jwks_cache
+    
+    supabase_url = os.environ.get("SUPABASE_URL", "")
+    if not supabase_url:
+        raise ValueError("SUPABASE_URL not configured")
+    
+    jwks_url = f"{supabase_url}/auth/v1/jwks"
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(jwks_url)
+        response.raise_for_status()
+        _jwks_cache = response.json()
+        return _jwks_cache
+
+
+def get_key_from_jwks(jwks, kid):
+    """Get the public key from JWKS matching the key ID."""
+    for key in jwks.get("keys", []):
+        if key.get("kid") == kid:
+            return key
+    return None
 
 
 def get_jwt_secret() -> str | bytes:
@@ -28,35 +55,69 @@ def get_jwt_secret() -> str | bytes:
         return secret
 
 
-def get_current_user(
+async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
     token = credentials.credentials
     
-    # Debug: Log token header to see algorithm
     try:
+        # Get unverified header to check algorithm
         header = jwt.get_unverified_header(token)
-        print(f"[Auth] Token algorithm: {header.get('alg')}")
-    except Exception as e:
-        print(f"[Auth] Could not parse token header: {e}")
-    
-    try:
-        secret = get_jwt_secret()
-        payload = jwt.decode(
-            token, 
-            secret, 
-            algorithms=ALLOWED_ALGORITHMS, 
-            audience="authenticated",
-            options={"verify_signature": True}
-        )
+        alg = header.get("alg")
+        kid = header.get("kid")
+        
+        print(f"[Auth] Token algorithm: {alg}, key ID: {kid}")
+        
+        if alg == "HS256":
+            # Symmetric - use JWT secret
+            secret = get_jwt_secret()
+            payload = jwt.decode(
+                token, 
+                secret, 
+                algorithms=["HS256"], 
+                audience="authenticated"
+            )
+        elif alg in ["RS256", "ES256"]:
+            # Asymmetric - fetch public key from JWKS
+            jwks = await fetch_jwks()
+            key_data = get_key_from_jwks(jwks, kid)
+            
+            if not key_data:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Public key not found for kid: {kid}",
+                )
+            
+            # Convert JWK to PEM format for PyJWT
+            if alg == "RS256":
+                from jwt.algorithms import RSAAlgorithm
+                public_key = RSAAlgorithm.from_jwk(key_data)
+            elif alg == "ES256":
+                from jwt.algorithms import ECAlgorithm
+                public_key = ECAlgorithm.from_jwk(key_data)
+            
+            payload = jwt.decode(
+                token,
+                public_key,
+                algorithms=[alg],
+                audience="authenticated"
+            )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Unsupported algorithm: {alg}",
+            )
+        
         user_id = payload.get("sub")
         if user_id is None:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid auth credentials: no sub claim",
             )
+        
         print(f"[Auth] Authenticated user: {user_id}")
         return user_id
+        
     except jwt.ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
