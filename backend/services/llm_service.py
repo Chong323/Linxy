@@ -19,6 +19,15 @@ from .memory_service import (
 client = genai.Client()
 
 
+def _extract_identity_variables(identity_dict: dict) -> tuple[str, str, str, str]:
+    """Helper to extract common identity variables with fallbacks."""
+    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
+    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
+    child_name = identity_dict.get("user", {}).get("name", "the child")
+    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    return ai_name, ai_persona, child_name, grade_level
+
+
 async def generate_wakeup_message(user_id: str) -> str:
     """
     Generates a proactive wake-up message for the child using Gemini.
@@ -31,10 +40,7 @@ async def generate_wakeup_message(user_id: str) -> str:
         return "Hi! I'm Linxy. What should we do today?"
 
     identity_dict = await get_identity_dict(user_id)
-    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
-    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
-    child_name = identity_dict.get("user", {}).get("name", "the child")
-    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
 
     # Extract recent memories (last 3)
     recent_memories_text = ""
@@ -109,10 +115,7 @@ async def generate_chat_response(
     Returns a dict with 'reply' and optionally 'awarded_sticker'.
     """
     identity_dict = await get_identity_dict(user_id)
-    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
-    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
-    child_name = identity_dict.get("user", {}).get("name", "the child")
-    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
     
     instructions = await get_core_instructions(user_id)
 
@@ -470,10 +473,7 @@ async def generate_parent_chat_response(
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
     identity_dict = await get_identity_dict(user_id)
-    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
-    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
-    child_name = identity_dict.get("user", {}).get("name", "the child")
-    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
     
     instructions = await get_core_instructions(user_id)
 
@@ -586,52 +586,46 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                     and part.function_call.name == "update_identity"
                 ):
                     args = part.function_call.args or {}
-                    identity_data: dict = {}
-                    if isinstance(args, dict):
-                        ai_name = args.get("ai_name")
-                        ai_persona = args.get("ai_persona")
-                        child_name = args.get("child_name")
-                        child_grade_level = args.get("child_grade_level")
-                        
-                        if ai_name is not None or ai_persona is not None:
-                            identity_data["ai"] = {}
-                            if ai_name is not None:
-                                identity_data["ai"]["name"] = ai_name
-                            if ai_persona is not None:
-                                identity_data["ai"]["persona"] = ai_persona
-                        if child_name is not None or child_grade_level is not None:
-                            identity_data["user"] = {}
-                            if child_name is not None:
-                                identity_data["user"]["name"] = child_name
-                            if child_grade_level is not None:
-                                identity_data["user"]["grade_level"] = child_grade_level
-                        
-                        if identity_data:
-                            updated_identity = identity_data
-                    else:
+                    
+                    # Normalize args to dict
+                    args_dict = args if isinstance(args, dict) else {}
+                    if not isinstance(args, dict):
                         try:
-                            ai_name = args.get("ai_name")  # type: ignore
-                            ai_persona = args.get("ai_persona")  # type: ignore
-                            child_name = args.get("child_name")  # type: ignore
-                            child_grade_level = args.get("child_grade_level")  # type: ignore
-                            
-                            if ai_name is not None or ai_persona is not None:
-                                identity_data["ai"] = {}
-                                if ai_name is not None:
-                                    identity_data["ai"]["name"] = ai_name
-                                if ai_persona is not None:
-                                    identity_data["ai"]["persona"] = ai_persona
-                            if child_name is not None or child_grade_level is not None:
-                                identity_data["user"] = {}
-                                if child_name is not None:
-                                    identity_data["user"]["name"] = child_name
-                                if child_grade_level is not None:
-                                    identity_data["user"]["grade_level"] = child_grade_level
-                            
-                            if identity_data:
-                                updated_identity = identity_data
+                            # Try to extract properties if it's an object with .get()
+                            if hasattr(args, "get"):
+                                args_dict = {
+                                    "ai_name": args.get("ai_name"),
+                                    "ai_persona": args.get("ai_persona"),
+                                    "child_name": args.get("child_name"),
+                                    "child_grade_level": args.get("child_grade_level")
+                                }
+                            else:
+                                # Sometimes it's a proto struct, map fields to dict
+                                args_dict = {k: v for k, v in args.items()} if hasattr(args, "items") else {}
                         except AttributeError:
-                            pass
+                            print(f"Failed to parse update_identity args: {args}")
+                            
+                    identity_data: dict = {}
+                    ai_name = args_dict.get("ai_name")
+                    ai_persona = args_dict.get("ai_persona")
+                    child_name = args_dict.get("child_name")
+                    child_grade_level = args_dict.get("child_grade_level")
+                    
+                    if ai_name is not None or ai_persona is not None:
+                        identity_data["ai"] = {}
+                        if ai_name is not None:
+                            identity_data["ai"]["name"] = ai_name
+                        if ai_persona is not None:
+                            identity_data["ai"]["persona"] = ai_persona
+                    if child_name is not None or child_grade_level is not None:
+                        identity_data["user"] = {}
+                        if child_name is not None:
+                            identity_data["user"]["name"] = child_name
+                        if child_grade_level is not None:
+                            identity_data["user"]["grade_level"] = child_grade_level
+                    
+                    if identity_data:
+                        updated_identity = identity_data
 
     if not reply_text and saved_instruction:
         reply_text = "I have successfully saved the instruction for Linxy."
