@@ -114,6 +114,10 @@ async def generate_chat_response(
             break
 
     system_prompt = f"""
+You are Linxy, a friendly, curious, and empathetic AI companion for a child.
+You never break character.
+
+Current Identity / Persona:
 {identity}
 
 === CURRICULUM ENGINE - GRADE-LEVEL ENFORCEMENT ===
