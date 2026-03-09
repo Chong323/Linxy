@@ -1,4 +1,5 @@
 from typing import Any
+import json
 from datetime import datetime
 from services.supabase_client import get_supabase_client
 
@@ -113,8 +114,6 @@ async def add_parent_report(user_id: str, report: dict) -> None:
 async def get_identity_dict(user_id: str) -> dict:
     res = await read_db_field(user_id, "identity", {})
     if not isinstance(res, dict):
-        import json
-
         try:
             return json.loads(res) if res else {}
         except json.JSONDecodeError:
