@@ -22,7 +22,11 @@ async def fetch_jwks():
     if not supabase_url:
         raise ValueError("SUPABASE_URL not configured")
     
-    jwks_url = f"{supabase_url}/auth/v1/jwks"
+    # Try multiple possible JWKS endpoints
+    possible_urls = [
+        f"{supabase_url}/.well-known/jwks.json",
+        f"{supabase_url}/auth/v1/.well-known/jwks.json",
+    ]
     
     headers = {}
     if supabase_key:
@@ -30,10 +34,19 @@ async def fetch_jwks():
         headers["Authorization"] = f"Bearer {supabase_key}"
     
     async with httpx.AsyncClient() as client:
-        response = await client.get(jwks_url, headers=headers)
-        response.raise_for_status()
-        _jwks_cache = response.json()
-        return _jwks_cache
+        for jwks_url in possible_urls:
+            try:
+                print(f"[Auth] Trying JWKS URL: {jwks_url}")
+                response = await client.get(jwks_url, headers=headers)
+                if response.status_code == 200:
+                    _jwks_cache = response.json()
+                    print(f"[Auth] Successfully fetched JWKS from: {jwks_url}")
+                    return _jwks_cache
+            except Exception as e:
+                print(f"[Auth] Failed to fetch from {jwks_url}: {e}")
+                continue
+        
+        raise ValueError("Could not fetch JWKS from any known endpoint")
 
 
 def get_key_from_jwks(jwks, kid):
