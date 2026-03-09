@@ -108,3 +108,24 @@ async def add_parent_report(user_id: str, report: dict) -> None:
     current_reports = await get_parent_reports(user_id)
     current_reports.append(report)
     await write_db_field(user_id, "parent_reports", current_reports)
+
+
+async def get_identity_dict(user_id: str) -> dict:
+    res = await read_db_field(user_id, "identity", {})
+    if not isinstance(res, dict):
+        import json
+
+        try:
+            return json.loads(res) if res else {}
+        except json.JSONDecodeError:
+            return {}
+    return res
+
+
+async def update_identity_dict(user_id: str, identity_data: dict) -> None:
+    current = await get_identity_dict(user_id)
+    if "ai" in identity_data:
+        current["ai"] = {**current.get("ai", {}), **identity_data["ai"]}
+    if "user" in identity_data:
+        current["user"] = {**current.get("user", {}), **identity_data["user"]}
+    await write_db_field(user_id, "identity", current)
