@@ -68,3 +68,26 @@ async def test_chat_endpoint_with_sticker(monkeypatch):
     assert data["reply"] == "Here is a sticker for you!"
     assert "awarded_sticker" in data
     assert data["awarded_sticker"]["sticker"] == "Star"
+
+
+@pytest.mark.anyio
+async def test_parent_chat_endpoint_update_identity(monkeypatch):
+    async def mock_generate_parent_chat_response(user_id, message, history):
+        return {
+            "reply": "Identity updated.",
+            "updated_identity": {"ai": {"name": "Buddy"}, "user": {"grade_level": "2nd Grade"}}
+        }
+    monkeypatch.setattr("main.generate_parent_chat_response", mock_generate_parent_chat_response)
+    
+    updated_dict = {}
+    async def mock_update_identity_dict(user_id, identity_data):
+        updated_dict.update(identity_data)
+    monkeypatch.setattr("main.update_identity_dict", mock_update_identity_dict)
+
+    from fastapi.testclient import TestClient
+    from main import app
+    client = TestClient(app)
+    
+    response = client.post("/parent/chat", json={"message": "Call yourself Buddy", "history": []})
+    assert response.status_code == 200
+    assert updated_dict["ai"]["name"] == "Buddy"
