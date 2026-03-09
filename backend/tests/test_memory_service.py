@@ -1,6 +1,11 @@
 import pytest
 from unittest.mock import MagicMock
-from services.memory_service import get_rewards, add_reward
+from services.memory_service import (
+    get_rewards,
+    add_reward,
+    get_identity_dict,
+    update_identity_dict,
+)
 
 
 @pytest.fixture
@@ -68,3 +73,24 @@ async def test_add_reward_updates_data(mock_supabase_client):
     assert len(args[0]["rewards"]) == 1
     assert args[0]["rewards"][0]["sticker"] == "Star"
     assert args[0]["rewards"][0]["reason"] == "Reason 1"
+
+
+@pytest.mark.anyio
+async def test_identity_dict(monkeypatch):
+    mock_db = {}
+
+    async def mock_read(user_id, field, default):
+        return mock_db.get(field, default)
+
+    async def mock_write(user_id, field, value):
+        mock_db[field] = value
+
+    monkeypatch.setattr("services.memory_service.read_db_field", mock_read)
+    monkeypatch.setattr("services.memory_service.write_db_field", mock_write)
+
+    new_identity = {"ai": {"name": "Buddy"}, "user": {"grade_level": "3rd Grade"}}
+    await update_identity_dict("test_user", new_identity)
+
+    identity = await get_identity_dict("test_user")
+    assert identity["ai"]["name"] == "Buddy"
+    assert identity["user"]["grade_level"] == "3rd Grade"
