@@ -20,8 +20,11 @@ def mock_genai_client(monkeypatch):
 @pytest.mark.anyio
 async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypatch):
     # Mock data
-    async def mock_get_identity(user_id):
-        return "I am Linxy, a helpful AI companion."
+    async def mock_get_identity_dict(user_id):
+        return {
+            "ai": {"name": "Linxy", "persona": "a helpful AI companion."},
+            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"}
+        }
 
     async def mock_get_current_state(user_id):
         return "The child was learning about dinosaurs."
@@ -30,7 +33,7 @@ async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypa
         return [{"summary": "Talked about T-Rex", "interests": ["dinosaurs"]}]
 
     # Patch the imported functions in llm_service
-    monkeypatch.setattr(llm_service, "get_identity", mock_get_identity)
+    monkeypatch.setattr(llm_service, "get_identity_dict", mock_get_identity_dict)
     monkeypatch.setattr(llm_service, "get_current_state", mock_get_current_state)
     monkeypatch.setattr(llm_service, "get_episodic_memory", mock_get_episodic_memory)
 
@@ -56,7 +59,7 @@ async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypa
     config = kwargs["config"]
     system_instruction = config.system_instruction
     assert "dinosaurs" in system_instruction or "T-Rex" in system_instruction
-    assert "I am Linxy" in system_instruction
+    assert "Linxy" in system_instruction
 
 
 @pytest.mark.anyio
@@ -90,8 +93,11 @@ async def test_generate_wakeup_message_only_current_state(
     mock_genai_client, monkeypatch
 ):
     # Mock data: No memories, but has current state
-    async def mock_get_identity(user_id):
-        return "I am Linxy."
+    async def mock_get_identity_dict(user_id):
+        return {
+            "ai": {"name": "Linxy", "persona": "a friendly AI companion."},
+            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"}
+        }
 
     async def mock_get_current_state(user_id):
         return "The child was building a lego castle."
@@ -99,7 +105,7 @@ async def test_generate_wakeup_message_only_current_state(
     async def mock_get_episodic_memory(user_id):
         return []
 
-    monkeypatch.setattr(llm_service, "get_identity", mock_get_identity)
+    monkeypatch.setattr(llm_service, "get_identity_dict", mock_get_identity_dict)
     monkeypatch.setattr(llm_service, "get_current_state", mock_get_current_state)
     monkeypatch.setattr(llm_service, "get_episodic_memory", mock_get_episodic_memory)
 
@@ -121,3 +127,34 @@ async def test_generate_wakeup_message_only_current_state(
     args, kwargs = mock_genai_client.models.generate_content.call_args
     config = kwargs["config"]
     assert "lego castle" in config.system_instruction
+
+
+@pytest.mark.anyio
+async def test_generate_wakeup_message_with_structured_identity(mock_genai_client, monkeypatch):
+    async def mock_get_identity_dict(user_id):
+        return {
+            "ai": {"name": "Captain Sparkle", "persona": "a brave pirate"},
+            "user": {"name": "Tommy", "grade_level": "1st Grade"}
+        }
+    monkeypatch.setattr(llm_service, "get_identity_dict", mock_get_identity_dict)
+    monkeypatch.setattr(llm_service, "get_identity", lambda u: "")
+    
+    async def mock_get_current_state(user_id):
+        return "The child was learning about dinosaurs."
+
+    async def mock_get_episodic_memory(user_id):
+        return [{"summary": "Talked about T-Rex", "interests": ["dinosaurs"]}]
+
+    monkeypatch.setattr(llm_service, "get_current_state", mock_get_current_state)
+    monkeypatch.setattr(llm_service, "get_episodic_memory", mock_get_episodic_memory)
+    
+    mock_response = MagicMock()
+    mock_response.text = "Ahoy there Tommy! Ready to find more dinosaur bones?"
+    mock_genai_client.models.generate_content.return_value = mock_response
+    
+    await llm_service.generate_wakeup_message("test_user_id")
+    
+    args, kwargs = mock_genai_client.models.generate_content.call_args
+    system_instruction = kwargs["config"].system_instruction
+    assert "Captain Sparkle" in system_instruction
+    assert "brave pirate" in system_instruction

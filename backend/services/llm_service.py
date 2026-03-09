@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import json
 from datetime import datetime, timezone
 from .memory_service import (
-    get_identity,
+    get_identity_dict,
     get_core_instructions,
     get_episodic_memory,
     get_long_term_summary,
@@ -30,7 +30,11 @@ async def generate_wakeup_message(user_id: str) -> str:
     if not memories and not current_state:
         return "Hi! I'm Linxy. What should we do today?"
 
-    identity = await get_identity(user_id)
+    identity_dict = await get_identity_dict(user_id)
+    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
+    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
+    child_name = identity_dict.get("user", {}).get("name", "the child")
+    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
 
     # Extract recent memories (last 3)
     recent_memories_text = ""
@@ -44,11 +48,11 @@ async def generate_wakeup_message(user_id: str) -> str:
                 )
 
     system_prompt = f"""
-You are Linxy, a friendly, curious, and empathetic AI companion for a child.
+You are {ai_name}, {ai_persona}
 Your goal is to start the conversation proactively when the child logs in.
 
-Current Identity:
-{identity}
+Child's Name: {child_name}
+Grade Level: {grade_level}
 
 Current State (What happened recently):
 {current_state}
@@ -63,6 +67,7 @@ Generate a short, engaging greeting or question to hook the child.
 - Be warm and enthusiastic.
 - Do NOT mention that you are an AI or that you have "memory". Just chat naturally.
 - Do NOT include any parent instructions or educational goals yet. Just build rapport.
+- Address the child by their name: {child_name}
 
 If there are no specific memories or context to draw from, generate a generic friendly greeting.
 """
@@ -103,22 +108,19 @@ async def generate_chat_response(
     Identity persona and parent directives into the system instructions.
     Returns a dict with 'reply' and optionally 'awarded_sticker'.
     """
-    identity = await get_identity(user_id)
+    identity_dict = await get_identity_dict(user_id)
+    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
+    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
+    child_name = identity_dict.get("user", {}).get("name", "the child")
+    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    
     instructions = await get_core_instructions(user_id)
 
-    # Extract grade level from identity for curriculum enforcement
-    grade_level = "Kindergarten (ages 4-6)"  # Default
-    for line in identity.split("\n"):
-        if "grade level" in line.lower():
-            grade_level = line.split(":", 1)[-1].strip()
-            break
-
     system_prompt = f"""
-You are Linxy, a friendly, curious, and empathetic AI companion for a child.
+You are {ai_name}, {ai_persona}
 You never break character.
 
-Current Identity / Persona:
-{identity}
+Child's Name: {child_name}
 
 === CURRICULUM ENGINE - GRADE-LEVEL ENFORCEMENT ===
 **Grade Level**: {grade_level}
@@ -467,23 +469,21 @@ async def generate_parent_chat_response(
     Generates a chat response for the Parent Architect AI.
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
+    identity_dict = await get_identity_dict(user_id)
+    child_name = identity_dict.get("user", {}).get("name", "the child")
+    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    
     instructions = await get_core_instructions(user_id)
-    identity = await get_identity(user_id)
-
-    # Extract current grade level
-    current_grade = "Kindergarten (ages 4-6)"
-    for line in identity.split("\n"):
-        if "grade level" in line.lower():
-            current_grade = line.split(":", 1)[-1].strip()
-            break
 
     system_prompt = f"""
 You are Linxy's 'Architect AI'. Your goal is to converse with parents, understand what they want their child to learn, experience, or avoid, and help them draft 'core instructions' for Linxy (the child's digital companion).
 
+Child's Name: {child_name}
+
 Current active instructions for the child:
 {instructions}
 
-Current Grade Level Setting: {current_grade}
+Current Grade Level Setting: {grade_level}
 
 IMPORTANT INSTRUCTIONS FOR YOU:
 1. BE CONVERSATIONAL: Do not jump straight into saving an instruction. Ask clarifying questions to understand the parent's exact goals, context, and how they want Linxy to handle it.
