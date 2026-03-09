@@ -4,7 +4,7 @@ from pydantic import BaseModel
 import json
 from datetime import datetime, timezone
 from .memory_service import (
-    get_identity,
+    get_identity_dict,
     get_core_instructions,
     get_episodic_memory,
     get_long_term_summary,
@@ -19,6 +19,15 @@ from .memory_service import (
 client = genai.Client()
 
 
+def _extract_identity_variables(identity_dict: dict) -> tuple[str, str, str, str]:
+    """Helper to extract common identity variables with fallbacks."""
+    ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
+    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
+    child_name = identity_dict.get("user", {}).get("name", "the child")
+    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    return ai_name, ai_persona, child_name, grade_level
+
+
 async def generate_wakeup_message(user_id: str) -> str:
     """
     Generates a proactive wake-up message for the child using Gemini.
@@ -30,7 +39,8 @@ async def generate_wakeup_message(user_id: str) -> str:
     if not memories and not current_state:
         return "Hi! I'm Linxy. What should we do today?"
 
-    identity = await get_identity(user_id)
+    identity_dict = await get_identity_dict(user_id)
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
 
     # Extract recent memories (last 3)
     recent_memories_text = ""
@@ -44,11 +54,11 @@ async def generate_wakeup_message(user_id: str) -> str:
                 )
 
     system_prompt = f"""
-You are Linxy, a friendly, curious, and empathetic AI companion for a child.
+You are {ai_name}, {ai_persona}
 Your goal is to start the conversation proactively when the child logs in.
 
-Current Identity:
-{identity}
+Child's Name: {child_name}
+Grade Level: {grade_level}
 
 Current State (What happened recently):
 {current_state}
@@ -63,6 +73,7 @@ Generate a short, engaging greeting or question to hook the child.
 - Be warm and enthusiastic.
 - Do NOT mention that you are an AI or that you have "memory". Just chat naturally.
 - Do NOT include any parent instructions or educational goals yet. Just build rapport.
+- Address the child by their name: {child_name}
 
 If there are no specific memories or context to draw from, generate a generic friendly greeting.
 """
@@ -103,22 +114,16 @@ async def generate_chat_response(
     Identity persona and parent directives into the system instructions.
     Returns a dict with 'reply' and optionally 'awarded_sticker'.
     """
-    identity = await get_identity(user_id)
+    identity_dict = await get_identity_dict(user_id)
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
+    
     instructions = await get_core_instructions(user_id)
 
-    # Extract grade level from identity for curriculum enforcement
-    grade_level = "Kindergarten (ages 4-6)"  # Default
-    for line in identity.split("\n"):
-        if "grade level" in line.lower():
-            grade_level = line.split(":", 1)[-1].strip()
-            break
-
     system_prompt = f"""
-You are Linxy, a friendly, curious, and empathetic AI companion for a child.
+You are {ai_name}, {ai_persona}
 You never break character.
 
-Current Identity / Persona:
-{identity}
+Child's Name: {child_name}
 
 === CURRICULUM ENGINE - GRADE-LEVEL ENFORCEMENT ===
 **Grade Level**: {grade_level}
@@ -467,23 +472,20 @@ async def generate_parent_chat_response(
     Generates a chat response for the Parent Architect AI.
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
+    identity_dict = await get_identity_dict(user_id)
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
+    
     instructions = await get_core_instructions(user_id)
-    identity = await get_identity(user_id)
-
-    # Extract current grade level
-    current_grade = "Kindergarten (ages 4-6)"
-    for line in identity.split("\n"):
-        if "grade level" in line.lower():
-            current_grade = line.split(":", 1)[-1].strip()
-            break
 
     system_prompt = f"""
-You are Linxy's 'Architect AI'. Your goal is to converse with parents, understand what they want their child to learn, experience, or avoid, and help them draft 'core instructions' for Linxy (the child's digital companion).
+You are {ai_name}, {ai_persona}
+Your goal is to converse with parents, understand what they want their child to learn, experience, or avoid, and help them draft 'core instructions' for Linxy (the child's digital companion).
+
+Child's Name: {child_name}
+Grade Level: {grade_level}
 
 Current active instructions for the child:
 {instructions}
-
-Current Grade Level Setting: {current_grade}
 
 IMPORTANT INSTRUCTIONS FOR YOU:
 1. BE CONVERSATIONAL: Do not jump straight into saving an instruction. Ask clarifying questions to understand the parent's exact goals, context, and how they want Linxy to handle it.
@@ -491,8 +493,7 @@ IMPORTANT INSTRUCTIONS FOR YOU:
 3. WAIT FOR CONFIRMATION: You must wait for the parent to confirm (e.g., "Yes", "Looks good", "Save it") BEFORE saving.
 4. HOW TO SAVE: ONLY when the parent explicitly confirms the drafted instruction, you MUST use the `save_core_instruction` tool to save the exact instruction text.
 5. ACKNOWLEDGE: When you use the tool, you must also provide a conversational text reply letting the parent know the instruction has been saved successfully.
-6. GRADE LEVEL: If the parent wants to change the child's grade level, ask for confirmation and save it in the format "GRADE_LEVEL: <level>" to the core_instructions.
-7. IDENTITY UPDATES: If the parent wants to change the child's name, grade level, or the AI's name/persona, use the `update_identity` tool.
+6. IDENTITY UPDATES: If the parent wants to change the child's grade level, name, or the AI's name/persona, use the `update_identity` tool.
 """
     model_id = "gemini-2.5-flash"
 
@@ -570,9 +571,12 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                 ):
                     args = part.function_call.args or {}
 
+                    # mypy/pyright isn't perfectly able to infer dict types here without cast,
+                    # but we can safely ignore or use type ignore or just isinstance.
                     if isinstance(args, dict):
                         saved_instruction = args.get("instruction")
                     else:
+                        # Fallback if args is not a plain dict (e.g. it's an object)
                         try:
                             saved_instruction = args.get("instruction")  # type: ignore
                         except AttributeError:
@@ -582,52 +586,46 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                     and part.function_call.name == "update_identity"
                 ):
                     args = part.function_call.args or {}
-                    identity_data: dict = {}
-                    if isinstance(args, dict):
-                        ai_name = args.get("ai_name")
-                        ai_persona = args.get("ai_persona")
-                        child_name = args.get("child_name")
-                        child_grade_level = args.get("child_grade_level")
-                        
-                        if ai_name is not None or ai_persona is not None:
-                            identity_data["ai"] = {}
-                            if ai_name is not None:
-                                identity_data["ai"]["name"] = ai_name
-                            if ai_persona is not None:
-                                identity_data["ai"]["persona"] = ai_persona
-                        if child_name is not None or child_grade_level is not None:
-                            identity_data["user"] = {}
-                            if child_name is not None:
-                                identity_data["user"]["name"] = child_name
-                            if child_grade_level is not None:
-                                identity_data["user"]["grade_level"] = child_grade_level
-                        
-                        if identity_data:
-                            updated_identity = identity_data
-                    else:
+                    
+                    # Normalize args to dict
+                    args_dict = args if isinstance(args, dict) else {}
+                    if not isinstance(args, dict):
                         try:
-                            ai_name = args.get("ai_name")  # type: ignore
-                            ai_persona = args.get("ai_persona")  # type: ignore
-                            child_name = args.get("child_name")  # type: ignore
-                            child_grade_level = args.get("child_grade_level")  # type: ignore
-                            
-                            if ai_name is not None or ai_persona is not None:
-                                identity_data["ai"] = {}
-                                if ai_name is not None:
-                                    identity_data["ai"]["name"] = ai_name
-                                if ai_persona is not None:
-                                    identity_data["ai"]["persona"] = ai_persona
-                            if child_name is not None or child_grade_level is not None:
-                                identity_data["user"] = {}
-                                if child_name is not None:
-                                    identity_data["user"]["name"] = child_name
-                                if child_grade_level is not None:
-                                    identity_data["user"]["grade_level"] = child_grade_level
-                            
-                            if identity_data:
-                                updated_identity = identity_data
+                            # Try to extract properties if it's an object with .get()
+                            if hasattr(args, "get"):
+                                args_dict = {
+                                    "ai_name": args.get("ai_name"),
+                                    "ai_persona": args.get("ai_persona"),
+                                    "child_name": args.get("child_name"),
+                                    "child_grade_level": args.get("child_grade_level")
+                                }
+                            else:
+                                # Sometimes it's a proto struct, map fields to dict
+                                args_dict = {k: v for k, v in args.items()} if hasattr(args, "items") else {}
                         except AttributeError:
-                            pass
+                            print(f"Failed to parse update_identity args: {args}")
+                            
+                    identity_data: dict = {}
+                    ai_name = args_dict.get("ai_name")
+                    ai_persona = args_dict.get("ai_persona")
+                    child_name = args_dict.get("child_name")
+                    child_grade_level = args_dict.get("child_grade_level")
+                    
+                    if ai_name is not None or ai_persona is not None:
+                        identity_data["ai"] = {}
+                        if ai_name is not None:
+                            identity_data["ai"]["name"] = ai_name
+                        if ai_persona is not None:
+                            identity_data["ai"]["persona"] = ai_persona
+                    if child_name is not None or child_grade_level is not None:
+                        identity_data["user"] = {}
+                        if child_name is not None:
+                            identity_data["user"]["name"] = child_name
+                        if child_grade_level is not None:
+                            identity_data["user"]["grade_level"] = child_grade_level
+                    
+                    if identity_data:
+                        updated_identity = identity_data
 
     if not reply_text and saved_instruction:
         reply_text = "I have successfully saved the instruction for Linxy."
