@@ -18,13 +18,19 @@ async def fetch_jwks():
         return _jwks_cache
     
     supabase_url = os.environ.get("SUPABASE_URL", "")
+    supabase_key = os.environ.get("SUPABASE_KEY", "")
     if not supabase_url:
         raise ValueError("SUPABASE_URL not configured")
     
     jwks_url = f"{supabase_url}/auth/v1/jwks"
     
+    headers = {}
+    if supabase_key:
+        headers["apikey"] = supabase_key
+        headers["Authorization"] = f"Bearer {supabase_key}"
+    
     async with httpx.AsyncClient() as client:
-        response = await client.get(jwks_url)
+        response = await client.get(jwks_url, headers=headers)
         response.raise_for_status()
         _jwks_cache = response.json()
         return _jwks_cache
@@ -95,10 +101,15 @@ async def get_current_user(
             elif alg == "ES256":
                 from jwt.algorithms import ECAlgorithm
                 public_key = ECAlgorithm.from_jwk(key_data)
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail=f"Unsupported algorithm: {alg}",
+                )
             
             payload = jwt.decode(
                 token,
-                public_key,
+                public_key,  # type: ignore
                 algorithms=[alg],
                 audience="authenticated"
             )
