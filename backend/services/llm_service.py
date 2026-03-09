@@ -494,6 +494,7 @@ IMPORTANT INSTRUCTIONS FOR YOU:
 4. HOW TO SAVE: ONLY when the parent explicitly confirms the drafted instruction, you MUST use the `save_core_instruction` tool to save the exact instruction text.
 5. ACKNOWLEDGE: When you use the tool, you must also provide a conversational text reply letting the parent know the instruction has been saved successfully.
 6. GRADE LEVEL: If the parent wants to change the child's grade level, ask for confirmation and save it in the format "GRADE_LEVEL: <level>" to the core_instructions.
+7. IDENTITY UPDATES: If the parent wants to change the child's grade level, name, or the AI's name/persona, use the `update_identity` tool.
 """
     model_id = "gemini-2.5-flash"
 
@@ -512,6 +513,19 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                     },
                     required=["instruction"],
                 ),
+            ),
+            types.FunctionDeclaration(
+                name="update_identity",
+                description="Updates the AI's custom name/persona or the child's identity details (like grade level).",
+                parameters=types.Schema(
+                    type=types.Type.OBJECT,  # type: ignore
+                    properties={
+                        "ai_name": types.Schema(type=types.Type.STRING, description="The custom name the AI should use (default Linxy)."),
+                        "ai_persona": types.Schema(type=types.Type.STRING, description="The personality traits of the AI."),
+                        "child_name": types.Schema(type=types.Type.STRING, description="The child's name."),
+                        "child_grade_level": types.Schema(type=types.Type.STRING, description="The child's grade level (e.g., '1st Grade').")
+                    }
+                )
             )
         ]
     )
@@ -544,6 +558,7 @@ IMPORTANT INSTRUCTIONS FOR YOU:
 
     reply_text = ""
     saved_instruction = None
+    updated_identity = None
 
     if response.candidates:
         candidate = response.candidates[0]
@@ -567,8 +582,59 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                             saved_instruction = args.get("instruction")  # type: ignore
                         except AttributeError:
                             saved_instruction = str(args)
+                elif (
+                    part.function_call
+                    and part.function_call.name == "update_identity"
+                ):
+                    args = part.function_call.args or {}
+                    identity_data: dict = {}
+                    if isinstance(args, dict):
+                        ai_name = args.get("ai_name")
+                        ai_persona = args.get("ai_persona")
+                        child_name = args.get("child_name")
+                        child_grade_level = args.get("child_grade_level")
+                        
+                        if ai_name is not None or ai_persona is not None:
+                            identity_data["ai"] = {}
+                            if ai_name is not None:
+                                identity_data["ai"]["name"] = ai_name
+                            if ai_persona is not None:
+                                identity_data["ai"]["persona"] = ai_persona
+                        if child_name is not None or child_grade_level is not None:
+                            identity_data["user"] = {}
+                            if child_name is not None:
+                                identity_data["user"]["name"] = child_name
+                            if child_grade_level is not None:
+                                identity_data["user"]["grade_level"] = child_grade_level
+                        
+                        if identity_data:
+                            updated_identity = identity_data
+                    else:
+                        try:
+                            ai_name = args.get("ai_name")  # type: ignore
+                            ai_persona = args.get("ai_persona")  # type: ignore
+                            child_name = args.get("child_name")  # type: ignore
+                            child_grade_level = args.get("child_grade_level")  # type: ignore
+                            
+                            if ai_name is not None or ai_persona is not None:
+                                identity_data["ai"] = {}
+                                if ai_name is not None:
+                                    identity_data["ai"]["name"] = ai_name
+                                if ai_persona is not None:
+                                    identity_data["ai"]["persona"] = ai_persona
+                            if child_name is not None or child_grade_level is not None:
+                                identity_data["user"] = {}
+                                if child_name is not None:
+                                    identity_data["user"]["name"] = child_name
+                                if child_grade_level is not None:
+                                    identity_data["user"]["grade_level"] = child_grade_level
+                            
+                            if identity_data:
+                                updated_identity = identity_data
+                        except AttributeError:
+                            pass
 
     if not reply_text and saved_instruction:
         reply_text = "I have successfully saved the instruction for Linxy."
 
-    return {"reply": reply_text.strip(), "saved_instruction": saved_instruction}
+    return {"reply": reply_text.strip(), "saved_instruction": saved_instruction, "updated_identity": updated_identity}

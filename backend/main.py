@@ -18,6 +18,7 @@ from services.memory_service import (  # noqa: E402
     add_episodic_memory,
     get_rewards,
     get_parent_reports,
+    update_identity_dict,
 )
 from routers.voice import router as voice_router  # noqa: E402
 
@@ -144,9 +145,13 @@ async def parent_chat_endpoint(
 
         reply = result.get("reply", "")
         saved_instruction = result.get("saved_instruction")
+        updated_identity = result.get("updated_identity")
 
         if saved_instruction:
             await add_core_instruction(user_id, saved_instruction.strip())
+        
+        if updated_identity:
+            await update_identity_dict(user_id, updated_identity)
 
         return ChatResponse(reply=reply)
     except Exception as e:
