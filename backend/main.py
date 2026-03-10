@@ -18,6 +18,7 @@ from services.memory_service import (  # noqa: E402
     add_episodic_memory,
     get_rewards,
     get_parent_reports,
+    get_all_memories,
     update_identity_dict,
 )
 from routers.voice import router as voice_router  # noqa: E402
@@ -168,5 +169,13 @@ async def parent_command_endpoint(
     try:
         await add_core_instruction(user_id, req.command)
         return {"status": "success", "message": "Directive added to memory."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/debug/memories")
+async def debug_memories(user_id: str = Depends(get_current_user)):
+    try:
+        memories = await get_all_memories(user_id)
+        return memories
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
