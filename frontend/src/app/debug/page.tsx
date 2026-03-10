@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { ProtectedRoute } from "@/components/ProtectedRoute"
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ export default function DebugPage() {
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
-  const fetchMemories = async () => {
+  const fetchMemories = useCallback(async () => {
     setIsLoading(true)
     try {
       const res = await apiClient.get("/debug/memories")
@@ -30,11 +30,11 @@ export default function DebugPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchMemories()
-  }, [])
+  }, [fetchMemories])
 
   return (
     <ProtectedRoute>
