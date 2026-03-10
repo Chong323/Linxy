@@ -94,3 +94,23 @@ async def test_identity_dict(monkeypatch):
     identity = await get_identity_dict("test_user")
     assert identity["ai"]["name"] == "Buddy"
     assert identity["user"]["grade_level"] == "3rd Grade"
+
+
+@pytest.fixture
+def mock_supabase(mock_supabase_client):
+    return mock_supabase_client[0]
+
+
+@pytest.mark.anyio
+async def test_get_all_memories(mock_supabase):
+    from services.memory_service import get_all_memories
+
+    # Setup mock response
+    mock_supabase.table().select().eq().execute.return_value.data = [
+        {"user_id": "test_user_id", "identity": {"test": "data"}}
+    ]
+
+    result = await get_all_memories("test_user_id")
+
+    assert result == {"user_id": "test_user_id", "identity": {"test": "data"}}
+    mock_supabase.table().select.assert_called_with("*")

@@ -15,7 +15,8 @@ async def read_db_field(user_id: str, field: str, default: Any = "") -> Any:
             if isinstance(item, dict):
                 return item.get(field, default)
             return default
-    except Exception:
+    except Exception as e:
+        print(f"Error fetching all memories: {e}")
         pass
     return default
 
@@ -129,3 +130,17 @@ async def update_identity_dict(user_id: str, identity_data: dict) -> None:
     if "user" in identity_data:
         current["user"] = {**current.get("user", {}), **identity_data["user"]}
     await write_db_field(user_id, "identity", current)
+
+
+async def get_all_memories(user_id: str) -> dict:
+    client = get_supabase_client()
+    try:
+        response = client.table("memories").select("*").eq("user_id", user_id).execute()
+        if response.data and len(response.data) > 0:
+            res = response.data[0]
+            if isinstance(res, dict):
+                return res
+    except Exception as e:
+        print(f"Error fetching all memories: {e}")
+        pass
+    return {}
