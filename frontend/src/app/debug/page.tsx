@@ -10,7 +10,7 @@ import { ArrowLeft, RefreshCw, Database } from "lucide-react"
 import { toast } from "sonner"
 
 export default function DebugPage() {
-  const [data, setData] = useState<any>(null)
+  const [data, setData] = useState<Record<string, unknown> | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
@@ -19,7 +19,7 @@ export default function DebugPage() {
     try {
       const res = await apiClient.get("/debug/memories")
       if (res.ok) {
-        const json = await res.json()
+        const json = await res.json() as Record<string, unknown>
         setData(json)
       } else {
         toast.error("Failed to fetch debug data")
@@ -58,7 +58,7 @@ export default function DebugPage() {
                 <CardTitle className="text-xl">Database Debug View</CardTitle>
               </div>
               <CardDescription className="text-slate-400">
-                Raw output of your user's row in the memories table
+                Raw output of your user&apos;s row in the memories table
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
