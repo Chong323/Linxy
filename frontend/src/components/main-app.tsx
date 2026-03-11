@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { ChildChat } from "./child-chat"
 import { ParentDashboard } from "./parent-dashboard"
 import { useAuth } from "@/contexts/AuthContext"
-import { LogOut, User } from "lucide-react"
+import { LogOut, User, Database } from "lucide-react"
 
 export function MainApp() {
   const { user, signOut, isLoading } = useAuth()
@@ -39,6 +39,15 @@ export function MainApp() {
               <User className="w-4 h-4" />
               {user.email}
             </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/debug")}
+              className="text-slate-600"
+            >
+              <Database className="w-4 h-4 mr-1" />
+              Debug
+            </Button>
             <Button
               variant="outline"
               size="sm"
