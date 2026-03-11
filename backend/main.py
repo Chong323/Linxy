@@ -150,7 +150,7 @@ async def parent_chat_endpoint(
 
         if saved_instruction:
             await add_core_instruction(user_id, saved_instruction.strip())
-        
+
         if updated_identity:
             await update_identity_dict(user_id, updated_identity)
 
@@ -171,6 +171,7 @@ async def parent_command_endpoint(
         return {"status": "success", "message": "Directive added to memory."}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/debug/memories")
 async def debug_memories(user_id: str = Depends(get_current_user)):

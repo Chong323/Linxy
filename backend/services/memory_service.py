@@ -24,7 +24,7 @@ async def read_db_field(user_id: str, field: str, default: Any = "") -> Any:
 async def write_db_field(user_id: str, field: str, value: Any) -> None:
     client = get_supabase_client()
     data = {"user_id": user_id, field: value}
-    client.table("memories").upsert(data).execute()
+    client.table("memories").upsert(data, on_conflict="user_id").execute()
 
 
 async def get_identity(user_id: str) -> str:

@@ -22,9 +22,13 @@ client = genai.Client()
 def _extract_identity_variables(identity_dict: dict) -> tuple[str, str, str, str]:
     """Helper to extract common identity variables with fallbacks."""
     ai_name = identity_dict.get("ai", {}).get("name", "Linxy")
-    ai_persona = identity_dict.get("ai", {}).get("persona", "a friendly, curious, and empathetic AI companion for a child.")
+    ai_persona = identity_dict.get("ai", {}).get(
+        "persona", "a friendly, curious, and empathetic AI companion for a child."
+    )
     child_name = identity_dict.get("user", {}).get("name", "the child")
-    grade_level = identity_dict.get("user", {}).get("grade_level", "Kindergarten (ages 4-6)")
+    grade_level = identity_dict.get("user", {}).get(
+        "grade_level", "Kindergarten (ages 4-6)"
+    )
     return ai_name, ai_persona, child_name, grade_level
 
 
@@ -40,7 +44,9 @@ async def generate_wakeup_message(user_id: str) -> str:
         return "Hi! I'm Linxy. What should we do today?"
 
     identity_dict = await get_identity_dict(user_id)
-    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(
+        identity_dict
+    )
 
     # Extract recent memories (last 3)
     recent_memories_text = ""
@@ -115,8 +121,10 @@ async def generate_chat_response(
     Returns a dict with 'reply' and optionally 'awarded_sticker'.
     """
     identity_dict = await get_identity_dict(user_id)
-    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
-    
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(
+        identity_dict
+    )
+
     instructions = await get_core_instructions(user_id)
 
     system_prompt = f"""
@@ -473,8 +481,10 @@ async def generate_parent_chat_response(
     Returns a dict with the conversational reply and any saved instructions via Function Calling.
     """
     identity_dict = await get_identity_dict(user_id)
-    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(identity_dict)
-    
+    ai_name, ai_persona, child_name, grade_level = _extract_identity_variables(
+        identity_dict
+    )
+
     instructions = await get_core_instructions(user_id)
 
     system_prompt = f"""
@@ -519,13 +529,24 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                 parameters=types.Schema(
                     type=types.Type.OBJECT,  # type: ignore
                     properties={
-                        "ai_name": types.Schema(type=types.Type.STRING, description="The custom name the AI should use (default Linxy)."),
-                        "ai_persona": types.Schema(type=types.Type.STRING, description="The personality traits of the AI."),
-                        "child_name": types.Schema(type=types.Type.STRING, description="The child's name."),
-                        "child_grade_level": types.Schema(type=types.Type.STRING, description="The child's grade level (e.g., '1st Grade').")
-                    }
-                )
-            )
+                        "ai_name": types.Schema(
+                            type=types.Type.STRING,
+                            description="The custom name the AI should use (default Linxy).",
+                        ),
+                        "ai_persona": types.Schema(
+                            type=types.Type.STRING,
+                            description="The personality traits of the AI.",
+                        ),
+                        "child_name": types.Schema(
+                            type=types.Type.STRING, description="The child's name."
+                        ),
+                        "child_grade_level": types.Schema(
+                            type=types.Type.STRING,
+                            description="The child's grade level (e.g., '1st Grade').",
+                        ),
+                    },
+                ),
+            ),
         ]
     )
 
@@ -582,11 +603,10 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                         except AttributeError:
                             saved_instruction = str(args)
                 elif (
-                    part.function_call
-                    and part.function_call.name == "update_identity"
+                    part.function_call and part.function_call.name == "update_identity"
                 ):
                     args = part.function_call.args or {}
-                    
+
                     # Normalize args to dict
                     args_dict = args if isinstance(args, dict) else {}
                     if not isinstance(args, dict):
@@ -597,20 +617,24 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                                     "ai_name": args.get("ai_name"),
                                     "ai_persona": args.get("ai_persona"),
                                     "child_name": args.get("child_name"),
-                                    "child_grade_level": args.get("child_grade_level")
+                                    "child_grade_level": args.get("child_grade_level"),
                                 }
                             else:
                                 # Sometimes it's a proto struct, map fields to dict
-                                args_dict = {k: v for k, v in args.items()} if hasattr(args, "items") else {}
+                                args_dict = (
+                                    {k: v for k, v in args.items()}
+                                    if hasattr(args, "items")
+                                    else {}
+                                )
                         except AttributeError:
                             print(f"Failed to parse update_identity args: {args}")
-                            
+
                     identity_data: dict = {}
                     ai_name = args_dict.get("ai_name")
                     ai_persona = args_dict.get("ai_persona")
                     child_name = args_dict.get("child_name")
                     child_grade_level = args_dict.get("child_grade_level")
-                    
+
                     if ai_name is not None or ai_persona is not None:
                         identity_data["ai"] = {}
                         if ai_name is not None:
@@ -623,11 +647,15 @@ IMPORTANT INSTRUCTIONS FOR YOU:
                             identity_data["user"]["name"] = child_name
                         if child_grade_level is not None:
                             identity_data["user"]["grade_level"] = child_grade_level
-                    
+
                     if identity_data:
                         updated_identity = identity_data
 
     if not reply_text and saved_instruction:
         reply_text = "I have successfully saved the instruction for Linxy."
 
-    return {"reply": reply_text.strip(), "saved_instruction": saved_instruction, "updated_identity": updated_identity}
+    return {
+        "reply": reply_text.strip(),
+        "saved_instruction": saved_instruction,
+        "updated_identity": updated_identity,
+    }

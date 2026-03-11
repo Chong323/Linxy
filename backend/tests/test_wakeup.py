@@ -23,7 +23,7 @@ async def test_generate_wakeup_message_with_memories(mock_genai_client, monkeypa
     async def mock_get_identity_dict(user_id):
         return {
             "ai": {"name": "Linxy", "persona": "a helpful AI companion."},
-            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"}
+            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"},
         }
 
     async def mock_get_current_state(user_id):
@@ -68,7 +68,7 @@ async def test_generate_wakeup_message_fallback(mock_genai_client, monkeypatch):
     async def mock_get_identity_dict(user_id):
         return {
             "ai": {"name": "Linxy", "persona": "a friendly AI companion."},
-            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"}
+            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"},
         }
 
     async def mock_get_current_state(user_id):
@@ -99,7 +99,7 @@ async def test_generate_wakeup_message_only_current_state(
     async def mock_get_identity_dict(user_id):
         return {
             "ai": {"name": "Linxy", "persona": "a friendly AI companion."},
-            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"}
+            "user": {"name": "the child", "grade_level": "Kindergarten (ages 4-6)"},
         }
 
     async def mock_get_current_state(user_id):
@@ -133,14 +133,17 @@ async def test_generate_wakeup_message_only_current_state(
 
 
 @pytest.mark.anyio
-async def test_generate_wakeup_message_with_structured_identity(mock_genai_client, monkeypatch):
+async def test_generate_wakeup_message_with_structured_identity(
+    mock_genai_client, monkeypatch
+):
     async def mock_get_identity_dict(user_id):
         return {
             "ai": {"name": "Captain Sparkle", "persona": "a brave pirate"},
-            "user": {"name": "Tommy", "grade_level": "1st Grade"}
+            "user": {"name": "Tommy", "grade_level": "1st Grade"},
         }
+
     monkeypatch.setattr(llm_service, "get_identity_dict", mock_get_identity_dict)
-    
+
     async def mock_get_current_state(user_id):
         return "The child was learning about dinosaurs."
 
@@ -149,13 +152,13 @@ async def test_generate_wakeup_message_with_structured_identity(mock_genai_clien
 
     monkeypatch.setattr(llm_service, "get_current_state", mock_get_current_state)
     monkeypatch.setattr(llm_service, "get_episodic_memory", mock_get_episodic_memory)
-    
+
     mock_response = MagicMock()
     mock_response.text = "Ahoy there Tommy! Ready to find more dinosaur bones?"
     mock_genai_client.models.generate_content.return_value = mock_response
-    
+
     await llm_service.generate_wakeup_message("test_user_id")
-    
+
     args, kwargs = mock_genai_client.models.generate_content.call_args
     system_instruction = kwargs["config"].system_instruction
     assert "Captain Sparkle" in system_instruction
